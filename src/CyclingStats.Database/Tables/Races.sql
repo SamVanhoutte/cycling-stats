@@ -1,0 +1,8 @@
+CREATE TABLE [dbo].[Races]
+(
+  [Id] NVARCHAR(255) NOT NULL PRIMARY KEY,
+  [Name] NVARCHAR(MAX) NOT NULL,
+  RaceDate DATETIME NOT NULL,
+  [Type] NVARCHAR(20),
+  [Distance] DECIMAL
+)

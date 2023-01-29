@@ -63,7 +63,6 @@ public class RaceResultCollector
             Date = GetInnerText(rows[0].SelectSingleNode("td")),
             RaceType = GetInnerText(rows[1].SelectNodes("td").Last()),
         };
-
         return result;
     }
 
