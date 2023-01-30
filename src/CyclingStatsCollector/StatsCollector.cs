@@ -56,6 +56,7 @@ public class StatsCollector
         var teamsNode =
             doc.DocumentNode.SelectSingleNode(
                 "//div[@class='box box_right']/div[@class='box-content']/table/tr[@class='uneven']");
+        rider.Id = riderId;
         rider.Team = GetInnerText(teamsNode.SelectNodes("td").Last());
         rider.Name = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
         rider.Sprinter = GetDiscipline(doc, "Sprinter");
@@ -72,6 +73,13 @@ public class StatsCollector
         var web = new HtmlWeb();
         var teamUrl = $"{BaseUri}/team/{teamName}/{DateTime.Now.Year}";
         var doc = await web.LoadFromWebAsync(teamUrl);
+        // Check if right page
+        var title = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
+        if (title.Equals("World Cycling Stats"))
+        {
+            Console.WriteLine($"Team {teamName} has no page found");
+            return new List<Rider>();
+        }
         var teamsTableNode =
             doc.DocumentNode.SelectSingleNode(
                 "//div[@class='main animated fadeInRight']/div/div[@class='box-content']/table");
@@ -81,7 +89,7 @@ public class StatsCollector
         {
             var cols = riderRow.SelectNodes("td");
             var riderCol = cols[1];
-            var riderId = Rider.GetRiderIdFromUrl( GetAttributeText(riderCol.SelectSingleNode("a"), "href"));
+            var riderId = Rider.GetRiderIdFromUrl(GetAttributeText(riderCol.SelectSingleNode("a"), "href"));
             riders.Add(await GetRiderAsync(riderId));
         }
 
@@ -140,4 +148,15 @@ public class StatsCollector
             ? ""
             : HtmlEntity.DeEntitize(node.GetAttributeValue(attributeName, "")).TrimStart().TrimEnd();
     }
+
+    public static List<string> TeamNames => new List<string>
+    {
+        "groupama-fdj", "team-arkéa-samsic", "ag2r-citroen-team", "cofidis", "ef-education---easypost",
+        "team-totalenergies", "israel---premier-tech", "uno-x-pro-cycling-team", "lotto---dstny",
+        "intermarché---circus---wanty", "alpecin---deceuninck", "bingoal---wb", "bora-hansgrohe",
+        "tudor-pro-cycling-team", "uae-team-emirates", "ineos-grenadiers", "nice-métropole-côte-d'azur",
+        "team-flanders---baloise", "trek-segafredo", "quick-step-alpha-vinyl-team", "astana-qazaqstan-team",
+        "bahrain-victorious","bardiani-csf-faizane", "jumbo-visma", "movistar-team", "team-bikeexchange-jayco", 
+        "team-dsm"
+    };
 }

@@ -1,5 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace CyclingStatsCollector.Entities;
 
+
+[PrimaryKey("Id")]
 public class Rider
 {
     public string Id { get; set; }

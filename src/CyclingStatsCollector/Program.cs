@@ -1,31 +1,31 @@
 ﻿using CyclingStatsCollector;
+using CyclingStatsCollector.Data;
 
-var url = "https://www.worldcyclingstats.com/en/race/tour-down-under/2023/stage-1";
-url = "https://www.worldcyclingstats.com/nl/koers/vuelta-a-san-juan-internacional/2023/etappe-1";
-var riderId = "sam-bennett";
-
-Console.WriteLine($"We will retrieve results from {url}");
-
-var resultCollector = new StatsCollector();
-var team = "bora-hansgrohe";
-var riders = await resultCollector.GetTeamRidersAsync(team);
-foreach (var riderv in riders)
+try
 {
-    Console.WriteLine($"{riderv.Name} - {riderv.Sprinter} - {riderv.Puncheur}");
+    var cnxString = args[0];
+    var resultCollector = new StatsCollector();
+    foreach (var teamName in StatsCollector.TeamNames)
+    {
+        var riders = await resultCollector.GetTeamRidersAsync(teamName);
+        if (riders.Any())
+        {
+            using (var ctx = StatsDbContext.CreateFromConnectionString(
+                       cnxString))
+            {
+                await ctx.UpsertRidersAsync(riders);
+            }
+
+            Console.WriteLine($"Saved {riders.Count()} riders of {teamName} to the data store");
+            break;
+        }
+    }
+
+    Console.WriteLine("Finished");
 }
-return;
-var race = await resultCollector.GetRaceDataAsync(url);
-race.Results = await resultCollector.GetRaceResultsAsync(url, 4);
-var rider = await resultCollector.GetRiderAsync(riderId);
-Console.WriteLine(rider.Name);
-Console.WriteLine(rider.Team);
-Console.WriteLine(rider.Sprinter);
-Console.WriteLine(rider.Puncheur);
-return;
-Console.WriteLine(race.Name);
-Console.WriteLine(race.Date);
-Console.WriteLine(race.RaceType);
-foreach (var result in race.Results)
+catch (Exception e)
 {
-    Console.WriteLine($"{result.Rider.Id} : {result.DelaySeconds} seconds");
+    Console.WriteLine(e.ToString());
+    Console.WriteLine();
+    Console.WriteLine(e.Message);
 }

@@ -12,7 +12,7 @@ public class StatsDbContext : DbContext
     public DbSet<Rider> Riders { get; set; }
     public DbSet<Race> Races { get; set; }
     public DbSet<Result> Results { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rider>().ToTable("Riders");
@@ -20,12 +20,40 @@ public class StatsDbContext : DbContext
         modelBuilder.Entity<Result>().ToTable("Results");
     }
 
-    public async Task InsertRidersAsync(IEnumerable< Models.Rider> riders)
+    public async Task UpsertRidersAsync(IEnumerable<Models.Rider> riders)
     {
-        await base.AddRangeAsync(riders.Select(r=>new Entities.Rider
+        foreach (var rider in riders)
         {
-            Id = r.Id, Name = r.Name, Team = r.Team
-        }));
+            var existingRider = await Riders.FindAsync(rider.Id);
+            if (existingRider == null)
+            {
+                await Riders.AddAsync(new Rider{
+                    Id = rider.Id, Name = rider.Name, Team = rider.Team,
+                    Sprinter = rider.Sprinter, Climber = rider.Climber, Puncheur = rider.Puncheur,
+                    AllRounder = rider.AllRounder, OneDay = rider.OneDay, TimeTrialist = rider.TimeTrialist
+                });
+            }
+            else
+            {
+                existingRider.Id = rider.Id; 
+                existingRider.Name = rider.Name; 
+                existingRider.Team = rider.Team;
+                existingRider.Sprinter = rider.Sprinter; 
+                existingRider.Climber = rider.Climber; 
+                existingRider.Puncheur = rider.Puncheur;
+                existingRider.AllRounder = rider.AllRounder; 
+                existingRider.OneDay = rider.OneDay; 
+                existingRider.TimeTrialist = rider.TimeTrialist;
+                Riders.Update(existingRider);
+            }
+        }
+
         await base.SaveChangesAsync();
-    } 
+    }
+
+    public static StatsDbContext CreateFromConnectionString(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<StatsDbContext>().UseSqlServer(connectionString).Options;
+        return new StatsDbContext(options);
+    }
 }
