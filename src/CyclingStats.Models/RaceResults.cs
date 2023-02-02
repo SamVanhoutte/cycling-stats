@@ -1,4 +1,4 @@
-namespace CyclingStatsCollector.Models;
+namespace CyclingStats.Models;
 
 public class RaceResults
 {

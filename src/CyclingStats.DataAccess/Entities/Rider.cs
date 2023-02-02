@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace CyclingStatsCollector.Entities;
+namespace CyclingStats.DataAccess.Entities;
 
 
 [PrimaryKey("Id")]

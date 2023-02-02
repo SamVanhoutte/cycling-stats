@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace CyclingStatsCollector.Entities;
+namespace CyclingStats.DataAccess.Entities;
 
 [PrimaryKey("Id")]
 public class Race

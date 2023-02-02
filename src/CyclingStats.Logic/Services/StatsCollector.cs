@@ -1,15 +1,23 @@
 using System.Globalization;
-using CyclingStatsCollector.Models;
+using CyclingStats.Logic.Interfaces;
+using CyclingStats.Models;
+using CyclingStats.Models.Configuration;
 using HtmlAgilityPack;
-using System.Net;
+using Microsoft.Extensions.Options;
+
+namespace CyclingStats.Logic.Services;
 
 
-namespace CyclingStatsCollector;
-
-public class StatsCollector
+public class StatsCollector : IDataRetriever
 {
-    private static string BaseUri = "https://www.worldcyclingstats.com/en";
+    private readonly WcsOptions wcsSettings;
 
+    public StatsCollector(IOptions<WcsOptions> wcsOptions)
+    {
+        wcsSettings = wcsOptions.Value;
+    }
+
+    private string BaseUri => wcsSettings.BaseUri;
     public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int top = 50)
     {
         var race = new RaceResults();
