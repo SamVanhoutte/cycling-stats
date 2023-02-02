@@ -23,13 +23,7 @@ public abstract class BaseWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!scheduleOptions.WorkerSchedules?.ContainsKey(WorkerName) ?? true)
-        {
-            Logger?.LogError("No scheduled settings found for {worker}", WorkerName);
-            return;
-        }
-
-        var currentSchedule = scheduleOptions.WorkerSchedules[WorkerName];
+        var currentSchedule = scheduleOptions.LoadForWorker(WorkerName);
         while (!stoppingToken.IsCancellationRequested)
         {
             if (!currentSchedule.Disabled)

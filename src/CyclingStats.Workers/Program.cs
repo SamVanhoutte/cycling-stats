@@ -9,7 +9,6 @@ using Microsoft.Extensions.Hosting;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
     {
-        services.AddHostedService<RaceResultWorker>();
         services.Configure<SqlOptions>(options =>
             hostContext.Configuration.GetSection("sql").Bind(options));
         services.Configure<WcsOptions>(options =>
@@ -17,6 +16,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.Configure<ScheduleOptions>(options =>
             hostContext.Configuration.GetSection("schedule").Bind(options));
         services.AddSingleton<IDataRetriever, StatsCollector>();
+        services.AddHostedService<RaceResultWorker>();
+        services.AddHostedService<RaceDataWorker>();
     })
     .Build();
 
