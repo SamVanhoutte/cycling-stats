@@ -50,6 +50,9 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+        
       - name: Deploy cycling database
         uses: azure/sql-action@v1.3
         with:        
