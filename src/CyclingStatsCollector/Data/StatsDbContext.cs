@@ -18,6 +18,71 @@ public class StatsDbContext : DbContext
         modelBuilder.Entity<Rider>().ToTable("Riders");
         modelBuilder.Entity<Race>().ToTable("Races");
         modelBuilder.Entity<Result>().ToTable("Results");
+
+        modelBuilder.Entity<Race>()
+            .Property(r => r.Status)
+            .HasConversion(
+                v => v.ToString(),
+                v => (RaceStatus) Enum.Parse(typeof(RaceStatus), v));
+    }
+
+    public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null)
+    {
+        var races = await Races.Where(r =>
+            r.Status == (status ?? r.Status)).ToListAsync();
+        return races;
+    }
+
+    public async Task UpsertRaceResultsAsync(Models.RaceResults raceResults)
+    {
+        if (raceResults.Results.Any())
+        {
+            await UpsertRaceDataAsync(raceResults, RaceStatus.Finished);
+            foreach (var result in raceResults.Results)
+            {
+                var existingResult = await Results.FindAsync(result.Rider.Id, raceResults.Id);
+                if (existingResult == null)
+                {
+                    await Results.AddAsync(new Result()
+                    {
+                        RiderID = result.Rider.Id, RaceID = raceResults.Id,
+                        Gap = result.DelaySeconds, Position = result.Position
+                    });
+                }
+                else
+                {
+                    existingResult.Gap = result.DelaySeconds;
+                    existingResult.Position = result.Position;
+                    Results.Update(existingResult);
+                }
+            }
+
+            await SaveChangesAsync();
+        }
+    }
+
+    public async Task UpsertRaceDataAsync(Models.RaceResults raceData, RaceStatus newStatus)
+    {
+        var existingRace = await Races.FindAsync(raceData.Id);
+        if (existingRace == null)
+        {
+            await Races.AddAsync(new Race
+            {
+                Id = raceData.Id, Name = raceData.Name, Distance = raceData.Distance,
+                RaceDate = raceData.Date, RaceType = raceData.RaceType, Status = newStatus
+            });
+        }
+        else
+        {
+            existingRace.Name = raceData.Name;
+            existingRace.RaceType = raceData.RaceType;
+            existingRace.Distance = raceData.Distance;
+            existingRace.RaceDate = raceData.Date;
+            existingRace.Status = newStatus;
+            Races.Update(existingRace);
+        }
+
+        await SaveChangesAsync();
     }
 
     public async Task UpsertRidersAsync(IEnumerable<Models.Rider> riders)
@@ -27,7 +92,8 @@ public class StatsDbContext : DbContext
             var existingRider = await Riders.FindAsync(rider.Id);
             if (existingRider == null)
             {
-                await Riders.AddAsync(new Rider{
+                await Riders.AddAsync(new Rider
+                {
                     Id = rider.Id, Name = rider.Name, Team = rider.Team,
                     Sprinter = rider.Sprinter, Climber = rider.Climber, Puncheur = rider.Puncheur,
                     AllRounder = rider.AllRounder, OneDay = rider.OneDay, TimeTrialist = rider.TimeTrialist
@@ -35,14 +101,14 @@ public class StatsDbContext : DbContext
             }
             else
             {
-                existingRider.Id = rider.Id; 
-                existingRider.Name = rider.Name; 
+                existingRider.Id = rider.Id;
+                existingRider.Name = rider.Name;
                 existingRider.Team = rider.Team;
-                existingRider.Sprinter = rider.Sprinter; 
-                existingRider.Climber = rider.Climber; 
+                existingRider.Sprinter = rider.Sprinter;
+                existingRider.Climber = rider.Climber;
                 existingRider.Puncheur = rider.Puncheur;
-                existingRider.AllRounder = rider.AllRounder; 
-                existingRider.OneDay = rider.OneDay; 
+                existingRider.AllRounder = rider.AllRounder;
+                existingRider.OneDay = rider.OneDay;
                 existingRider.TimeTrialist = rider.TimeTrialist;
                 Riders.Update(existingRider);
             }

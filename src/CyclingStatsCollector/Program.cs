@@ -3,22 +3,18 @@ using CyclingStatsCollector.Data;
 
 try
 {
-    var cnxString = args[0];
-    var resultCollector = new StatsCollector();
-    foreach (var teamName in StatsCollector.TeamNames)
+    var cnxString = args.Last();
+    switch(args[0].ToLower())
     {
-        var riders = await resultCollector.GetTeamRidersAsync(teamName);
-        if (riders.Any())
-        {
-            using (var ctx = StatsDbContext.CreateFromConnectionString(
-                       cnxString))
-            {
-                await ctx.UpsertRidersAsync(riders);
-            }
-
-            Console.WriteLine($"Saved {riders.Count()} riders of {teamName} to the data store");
+        case "teams":
+            await WorkflowProcessor.ImportTeamsAsync(cnxString);
             break;
-        }
+        case "race-data":
+            await WorkflowProcessor.ImportRaceDataAsync(cnxString);
+            break;
+        case "race-results":
+            await WorkflowProcessor.ImportRaceResultsAsync(cnxString);
+            break;
     }
 
     Console.WriteLine("Finished");
@@ -29,3 +25,5 @@ catch (Exception e)
     Console.WriteLine();
     Console.WriteLine(e.Message);
 }
+
+

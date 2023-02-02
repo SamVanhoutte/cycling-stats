@@ -10,11 +10,11 @@ public class StatsCollector
 {
     private static string BaseUri = "https://www.worldcyclingstats.com/en";
 
-    public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceUrl, int top = 50)
+    public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int top = 50)
     {
         var race = new RaceResults();
         var web = new HtmlWeb();
-        var doc = await web.LoadFromWebAsync(raceUrl);
+        var doc = await web.LoadFromWebAsync($"{BaseUri}/race/{raceId}");
 
 
         // Find the table that contains the results
@@ -105,11 +105,12 @@ public class StatsCollector
         return (int) (Math.Round(percentage));
     }
 
-    public async Task<RaceResults> GetRaceDataAsync(string raceUrl)
+    public async Task<RaceResults> GetRaceDataAsync(string raceId)
     {
         var race = new RaceResults();
         var web = new HtmlWeb();
-        var doc = await web.LoadFromWebAsync(raceUrl);
+        var uri = $"{BaseUri}/race/{raceId}";
+        var doc = await web.LoadFromWebAsync(uri);
 
         var title = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
         // Find the table that contains the results
@@ -120,15 +121,23 @@ public class StatsCollector
         var rows = secondDiv.SelectNodes("table/tr");
         var result = new RaceResults
         {
+            Id = raceId,
             Name = title,
-            Date = GetInnerText(rows[0].SelectSingleNode("td")),
+            Date =DateTime.Parse( GetInnerText(rows[0].SelectSingleNode("td"))),
+            Distance = parseDistance( GetInnerText(rows[4].SelectNodes("td").Last())),
             RaceType = GetInnerText(rows[1].SelectNodes("td").Last()),
         };
         return result;
     }
 
+    private decimal parseDistance(string distanceText)
+    {
+        return decimal.Parse(distanceText.Split(" ").First(), CultureInfo.InvariantCulture);
+    }
+    
     private int ParseTimeDelay(string timeDelay)
     {
+        if (string.IsNullOrWhiteSpace(timeDelay)) return -1;
         timeDelay = timeDelay.Replace("+", "");
         timeDelay = timeDelay.Replace(" ", "");
         timeDelay = timeDelay.TrimStart().TrimEnd();
