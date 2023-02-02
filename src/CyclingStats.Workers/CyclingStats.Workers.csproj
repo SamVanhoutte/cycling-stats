@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <AssemblyName>CyclingStats.Workers</AssemblyName>
+        <RootNamespace>CyclingStats.Workers</RootNamespace>
+        <PackageId>CyclingStats.Workers</PackageId>
+        <Authors>CyclingStats.Workers</Authors>
+        <Company>CyclingStats.Workers</Company>
+        <Product>CyclingStats.Workers</Product>
+    </PropertyGroup>
+    <PropertyGroup>
+        <ServerGarbageCollection>true</ServerGarbageCollection>
+    </PropertyGroup>
+    <ItemGroup>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CyclingStats.Logic\CyclingStats.Logic.csproj" />
+      <ProjectReference Include="..\CyclingStats.Models\CyclingStats.Models.csproj" />
+    </ItemGroup>
+
+</Project>

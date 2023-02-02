@@ -1,4 +1,4 @@
-namespace CyclingStatsCollector.Entities;
+namespace CyclingStats.DataAccess.Entities;
 
 public enum RaceStatus
 {

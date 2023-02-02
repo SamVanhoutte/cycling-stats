@@ -1,7 +1,7 @@
-using CyclingStatsCollector.Entities;
+using CyclingStats.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace CyclingStatsCollector.Data;
+namespace CyclingStats.DataAccess;
 
 public class StatsDbContext : DbContext
 {
