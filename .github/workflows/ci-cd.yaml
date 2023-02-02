@@ -1,4 +1,4 @@
-name: tasksmanager-backend-api deployment
+name: wcs-scraper deployment
 
 # When this action will be executed
 on:
@@ -37,7 +37,7 @@ jobs:
           push: true
           tags: ${{ secrets.ACR_USERNAME }}.azurecr.io/wcs-scraper:${{ github.sha }} , ${{ secrets.ACR_USERNAME }}.azurecr.io/wcs-scraper:latest
           file: src/Dockerfile
-          context: ./.
+          context: src/.
 
 
   deploy:
