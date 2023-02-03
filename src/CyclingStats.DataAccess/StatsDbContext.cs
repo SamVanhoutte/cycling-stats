@@ -61,6 +61,16 @@ public class StatsDbContext : DbContext
         }
     }
 
+    public async Task UpdateRaceStatusAsync(string raceId, RaceStatus newStatus)
+    {
+        var existingRace = await Races.FindAsync(raceId);
+        if (existingRace != null)
+        {
+            existingRace.Status = newStatus;
+            Races.Update(existingRace);
+            await SaveChangesAsync();
+        }
+    }
     public async Task UpsertRaceDataAsync(Models.RaceResults raceData, RaceStatus newStatus)
     {
         var existingRace = await Races.FindAsync(raceData.Id);
