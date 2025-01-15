@@ -1,4 +1,4 @@
-using CyclingStats.Models.Configuration;
+using CyclingStats.Logic.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers;

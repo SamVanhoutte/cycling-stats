@@ -8,6 +8,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclingStats.Models", "Cycl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclingStats.Workers", "CyclingStats.Workers\CyclingStats.Workers.csproj", "{0661359D-5481-4E63-9714-7666EF1F4817}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcyclingStats", "ProcyclingStats\ProcyclingStats.csproj", "{C62C2B0E-83E7-4E9E-8258-348B373018DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldcyclingStats", "WorldcyclingStats\WorldcyclingStats.csproj", "{60AD9C97-5A1A-4FB2-8E4C-855F7E5E650D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclingStats.DataCollectionTests", "CyclingStats.DataCollectionTests\CyclingStats.DataCollectionTests.csproj", "{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +36,17 @@ Global
 		{0661359D-5481-4E63-9714-7666EF1F4817}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0661359D-5481-4E63-9714-7666EF1F4817}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0661359D-5481-4E63-9714-7666EF1F4817}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C62C2B0E-83E7-4E9E-8258-348B373018DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C62C2B0E-83E7-4E9E-8258-348B373018DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C62C2B0E-83E7-4E9E-8258-348B373018DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C62C2B0E-83E7-4E9E-8258-348B373018DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60AD9C97-5A1A-4FB2-8E4C-855F7E5E650D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60AD9C97-5A1A-4FB2-8E4C-855F7E5E650D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60AD9C97-5A1A-4FB2-8E4C-855F7E5E650D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60AD9C97-5A1A-4FB2-8E4C-855F7E5E650D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

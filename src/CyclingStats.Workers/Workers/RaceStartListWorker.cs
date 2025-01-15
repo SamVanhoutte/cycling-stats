@@ -1,8 +1,7 @@
 using CyclingStats.DataAccess;
 using CyclingStats.DataAccess.Entities;
+using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
-using CyclingStats.Logic.Services;
-using CyclingStats.Models.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;

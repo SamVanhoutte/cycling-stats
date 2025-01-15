@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -30,6 +30,7 @@
     <ItemGroup>
       <ProjectReference Include="..\CyclingStats.Logic\CyclingStats.Logic.csproj" />
       <ProjectReference Include="..\CyclingStats.Models\CyclingStats.Models.csproj" />
+      <ProjectReference Include="..\WorldcyclingStats\WorldcyclingStats.csproj" />
     </ItemGroup>
 
 </Project>

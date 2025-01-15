@@ -1,18 +1,18 @@
 using System.Globalization;
+using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
-using CyclingStats.Models.Configuration;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
 
-namespace CyclingStats.Logic.Services;
+namespace WorldcyclingStats;
 
 
-public class StatsCollector : IDataRetriever
+public class WcsStatsCollector : IDataRetriever
 {
     private readonly WcsOptions wcsSettings;
 
-    public StatsCollector(IOptions<WcsOptions> wcsOptions)
+    public WcsStatsCollector(IOptions<WcsOptions> wcsOptions)
     {
         wcsSettings = wcsOptions.Value;
     }
@@ -102,6 +102,11 @@ public class StatsCollector : IDataRetriever
         }
 
         return riders;
+    }
+
+    public Task<IEnumerable<CyclingTeam>> GetTeamsAsync()
+    {
+        throw new NotImplementedException();
     }
 
     private int GetDiscipline(HtmlDocument doc, string discipline)

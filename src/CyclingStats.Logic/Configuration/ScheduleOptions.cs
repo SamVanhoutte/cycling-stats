@@ -1,4 +1,4 @@
-namespace CyclingStats.Models.Configuration;
+namespace CyclingStats.Logic.Configuration;
 
 public class ScheduleOptions
 {
