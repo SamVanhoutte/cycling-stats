@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CyclingStats.Logic\CyclingStats.Logic.csproj" />
+      <ProjectReference Include="..\ProcyclingStats\ProcyclingStats.csproj" />
       <ProjectReference Include="..\WorldcyclingStats\WorldcyclingStats.csproj" />
     </ItemGroup>
 

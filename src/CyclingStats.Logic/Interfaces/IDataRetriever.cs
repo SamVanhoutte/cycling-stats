@@ -8,5 +8,5 @@ public interface IDataRetriever
     Task<Rider> GetRiderAsync(string riderId);
     Task<IEnumerable<Rider>> GetTeamRidersAsync(string teamName);
     Task<IEnumerable<CyclingTeam>> GetTeamsAsync();
-    Task<RaceResults> GetRaceDataAsync(string raceId);
+    Task<RaceDetails> GetRaceDataAsync(string raceId, int year, string? stageId = null);
 }

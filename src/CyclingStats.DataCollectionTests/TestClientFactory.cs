@@ -2,6 +2,7 @@ using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using ProcyclingStats;
 using WorldcyclingStats;
 
 namespace CyclingStats.DataCollectionTests;
@@ -24,5 +25,12 @@ public class TestClientFactory
         var wcsConfiguration = new WcsOptions();
         Configuration.GetSection("wcs").Bind(wcsConfiguration);
         return new WcsStatsCollector(new OptionsWrapper<WcsOptions>(wcsConfiguration));
+    }
+    
+    public static async Task<IDataRetriever> GetPcsRetrieverAsync()
+    {
+        var pcsConfiguration = new PcsOptions();
+        Configuration.GetSection("pcs").Bind(pcsConfiguration);
+        return new PcsStatsCollector(new OptionsWrapper<PcsOptions>(pcsConfiguration));
     }
 }

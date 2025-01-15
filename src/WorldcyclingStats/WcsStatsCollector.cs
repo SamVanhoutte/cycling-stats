@@ -1,4 +1,5 @@
 using System.Globalization;
+using CyclingStats.Logic;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
@@ -6,7 +7,6 @@ using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
 
 namespace WorldcyclingStats;
-
 
 public class WcsStatsCollector : IDataRetriever
 {
@@ -18,9 +18,10 @@ public class WcsStatsCollector : IDataRetriever
     }
 
     private string BaseUri => wcsSettings.BaseUri;
+
     public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int top = 50)
     {
-        var race = new RaceResults();
+        var race = new RaceDetails();
         var web = new HtmlWeb();
         var doc = await web.LoadFromWebAsync($"{BaseUri}/race/{raceId}");
 
@@ -43,11 +44,11 @@ public class WcsStatsCollector : IDataRetriever
             {
                 Rider = new Rider
                 {
-                    Name = GetInnerText(cells[3]), Team = GetInnerText(cells[6]),
-                    Id = GetAttributeText(cells[3].SelectNodes("a").FirstOrDefault(), "href")
+                    Name = cells[3].GetInnerText(), Team = cells[6].GetInnerText(),
+                    Id = cells[3].SelectNodes("a").FirstOrDefault().GetAttributeText( "href")
                 },
                 Position = position,
-                DelaySeconds = position == 1 ? 0 : ParseTimeDelay(GetInnerText(cells[7]))
+                DelaySeconds = position == 1 ? 0 : cells[7].GetInnerText().ParseTimeDelay()
             });
             position++;
         }
@@ -65,8 +66,8 @@ public class WcsStatsCollector : IDataRetriever
             doc.DocumentNode.SelectSingleNode(
                 "//div[@class='box box_right']/div[@class='box-content']/table/tr[@class='uneven']");
         rider.Id = riderId;
-        rider.Team = GetInnerText(teamsNode.SelectNodes("td").Last());
-        rider.Name = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
+        rider.Team = teamsNode.SelectNodes("td").Last().GetInnerText();
+        rider.Name = doc.DocumentNode.SelectSingleNode("//h1").GetInnerText();
         rider.Sprinter = GetDiscipline(doc, "Sprinter");
         rider.OneDay = GetDiscipline(doc, "One-day specialist");
         rider.AllRounder = GetDiscipline(doc, "All-rounder");
@@ -82,12 +83,13 @@ public class WcsStatsCollector : IDataRetriever
         var teamUrl = $"{BaseUri}/team/{teamName}/{DateTime.Now.Year}";
         var doc = await web.LoadFromWebAsync(teamUrl);
         // Check if right page
-        var title = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
+        var title = doc.DocumentNode.SelectSingleNode("//h1").GetInnerText();
         if (title.Equals("World Cycling Stats"))
         {
             Console.WriteLine($"Team {teamName} has no page found");
             return new List<Rider>();
         }
+
         var teamsTableNode =
             doc.DocumentNode.SelectSingleNode(
                 "//div[@class='main animated fadeInRight']/div/div[@class='box-content']/table");
@@ -97,7 +99,7 @@ public class WcsStatsCollector : IDataRetriever
         {
             var cols = riderRow.SelectNodes("td");
             var riderCol = cols[1];
-            var riderId = Rider.GetRiderIdFromUrl(GetAttributeText(riderCol.SelectSingleNode("a"), "href"));
+            var riderId = Rider.GetRiderIdFromUrl(riderCol.SelectSingleNode("a").GetAttributeText("href"));
             riders.Add(await GetRiderAsync(riderId));
         }
 
@@ -112,64 +114,37 @@ public class WcsStatsCollector : IDataRetriever
     private int GetDiscipline(HtmlDocument doc, string discipline)
     {
         var disciplineDiv = doc.DocumentNode.SelectSingleNode($"//div[text()='&nbsp;{discipline}']");
-        var value = GetAttributeText(disciplineDiv, "aria-valuenow");
+        var value = disciplineDiv.GetAttributeText( "aria-valuenow");
         if (string.IsNullOrEmpty(value)) return 0;
         var percentage = double.Parse(value, CultureInfo.InvariantCulture);
-        return (int) (Math.Round(percentage));
+        return (int)(Math.Round(percentage));
     }
 
-    public async Task<RaceResults> GetRaceDataAsync(string raceId)
+    public async Task<RaceDetails> GetRaceDataAsync(string raceId, int year, string? stageId = null)
     {
-        var race = new RaceResults();
+        var race = new RaceDetails();
         var web = new HtmlWeb();
-        var uri = $"{BaseUri}/race/{raceId}";
+        var uri = $"{BaseUri}/race/{raceId}/{year}";
         var doc = await web.LoadFromWebAsync(uri);
 
-        var title = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
+        var title = doc.DocumentNode.SelectSingleNode("//h1").GetInnerText();
         // Find the table that contains the results
-        var routeDivNode = doc.DocumentNode.SelectSingleNode("//div[@class='box box_left']");
-        var secondDiv = routeDivNode.SelectNodes("div")[1];
+        var routeDivNode = doc.DocumentNode.SelectSingleNode("//div[@class='box box_middle']");
+        var secondDiv = routeDivNode.SelectSingleNode("div/div[@class='box-content']");
 
         // Get the rows of the table
         var rows = secondDiv.SelectNodes("table/tr");
-        var result = new RaceResults
+        var result = new RaceDetails
         {
             Id = raceId,
             Name = title,
-            Date =DateTime.Parse( GetInnerText(rows[0].SelectSingleNode("td"))),
-            Distance = parseDistance( GetInnerText(rows[4].SelectNodes("td").Last())),
-            RaceType = GetInnerText(rows[1].SelectNodes("td").Last()),
+            Date = rows[0].SelectSingleNode("td").GetInnerText().ParseDateFromText(),
+            Distance = rows[4].SelectNodes("td").Last().GetInnerText().ParseDistance(),
+            RaceType = rows[1].SelectNodes("td").Last().GetInnerText(),
         };
         return result;
     }
-
-    private decimal parseDistance(string distanceText)
-    {
-        return decimal.Parse(distanceText.Split(" ").First(), CultureInfo.InvariantCulture);
-    }
     
-    private int ParseTimeDelay(string timeDelay)
-    {
-        if (string.IsNullOrWhiteSpace(timeDelay)) return -1;
-        timeDelay = timeDelay.Replace("+", "");
-        timeDelay = timeDelay.Replace(" ", "");
-        timeDelay = timeDelay.TrimStart().TrimEnd();
-        var minutes = int.Parse(timeDelay.Split("'")[0]);
-        var seconds = int.Parse((timeDelay.Split("'")[1]).Replace("'", ""));
-        return minutes * 60 + seconds;
-    }
-
-    private string GetInnerText(HtmlNode? node)
-    {
-        return node == null ? "" : HtmlEntity.DeEntitize(node.InnerText).TrimStart().TrimEnd();
-    }
-
-    private string GetAttributeText(HtmlNode? node, string attributeName)
-    {
-        return node == null
-            ? ""
-            : HtmlEntity.DeEntitize(node.GetAttributeValue(attributeName, "")).TrimStart().TrimEnd();
-    }
 
     public static List<string> TeamNames => new List<string>
     {
@@ -178,7 +153,7 @@ public class WcsStatsCollector : IDataRetriever
         "intermarché---circus---wanty", "alpecin---deceuninck", "bingoal---wb", "bora-hansgrohe",
         "tudor-pro-cycling-team", "uae-team-emirates", "ineos-grenadiers", "nice-métropole-côte-d'azur",
         "team-flanders---baloise", "trek-segafredo", "quick-step-alpha-vinyl-team", "astana-qazaqstan-team",
-        "bahrain-victorious","bardiani-csf-faizane", "jumbo-visma", "movistar-team", "team-bikeexchange-jayco", 
+        "bahrain-victorious", "bardiani-csf-faizane", "jumbo-visma", "movistar-team", "team-bikeexchange-jayco",
         "team-dsm"
     };
 }

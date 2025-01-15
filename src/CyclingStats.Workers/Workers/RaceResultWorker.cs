@@ -38,7 +38,7 @@ public class RaceResultWorker : BaseWorker
                 {
                     try
                     {
-                        var raceData = await resultCollector.GetRaceDataAsync(race.Id);
+                        var raceData = await resultCollector.GetRaceDataAsync(race.Id, DateTime.Now.Year);
                         raceData.Results = await resultCollector.GetRaceResultsAsync(race.Id, 200);
                         if (raceData.Results.Any())
                         {

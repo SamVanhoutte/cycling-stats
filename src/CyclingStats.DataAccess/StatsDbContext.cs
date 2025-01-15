@@ -33,19 +33,19 @@ public class StatsDbContext : DbContext
         return races;
     }
 
-    public async Task UpsertRaceResultsAsync(Models.RaceResults raceResults)
+    public async Task UpsertRaceResultsAsync(Models.RaceDetails raceDetails)
     {
-        if (raceResults.Results.Any())
+        if (raceDetails.Results.Any())
         {
-            await UpsertRaceDataAsync(raceResults, RaceStatus.Finished);
-            foreach (var result in raceResults.Results)
+            await UpsertRaceDataAsync(raceDetails, RaceStatus.Finished);
+            foreach (var result in raceDetails.Results)
             {
-                var existingResult = await Results.FindAsync(result.Rider.Id, raceResults.Id);
+                var existingResult = await Results.FindAsync(result.Rider.Id, raceDetails.Id);
                 if (existingResult == null)
                 {
                     await Results.AddAsync(new Result()
                     {
-                        RiderID = result.Rider.Id, RaceID = raceResults.Id,
+                        RiderID = result.Rider.Id, RaceID = raceDetails.Id,
                         Gap = result.DelaySeconds, Position = result.Position
                     });
                 }
@@ -71,7 +71,7 @@ public class StatsDbContext : DbContext
             await SaveChangesAsync();
         }
     }
-    public async Task UpsertRaceDataAsync(Models.RaceResults raceData, RaceStatus newStatus)
+    public async Task UpsertRaceDataAsync(Models.RaceDetails raceData, RaceStatus newStatus)
     {
         var existingRace = await Races.FindAsync(raceData.Id);
         if (existingRace == null)
