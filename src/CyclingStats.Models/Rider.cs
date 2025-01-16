@@ -15,7 +15,9 @@ public class Rider
         if (url.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
         {
             var paths = url.Split("/");
-            if (url.EndsWith(DateTime.Today.Year.ToString()))
+            // Check if the url ends with a year
+            var suffix = url[^4..];
+            if (int.TryParse(suffix, out _))
             {
                 url = paths.SkipLast(1).LastOrDefault() ?? "";
             }

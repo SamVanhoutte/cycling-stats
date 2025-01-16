@@ -38,7 +38,7 @@ public class RaceDataWorker : BaseWorker
                     try
                     {
                         logger.LogInformation("Updating data for race {RaceId}", race.Id);
-                        var raceData = await resultCollector.GetRaceDataAsync(race.Id);
+                        var raceData = await resultCollector.GetRaceDataAsync(race.Id, DateTime.Now.Year);
                         await ctx.UpsertRaceDataAsync(raceData, RaceStatus.WaitingForStartList);
                     }
                     catch (Exception e)
