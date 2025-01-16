@@ -38,4 +38,12 @@ public class PcsDataCollectionTests
         Assert.True(raceData.ProfileImageUrl.Contains("profiles"));
         Assert.True(raceData.StageRace);
     }
+
+    [Fact]
+    public async Task TestGetRaceResultsAsync()
+    {
+        var retriever = await TestClientFactory.GetPcsRetrieverAsync();
+        var results = await retriever.GetRaceResultsAsync("tour-down-under" , 2024, "stage-1");
+
+    }
 }

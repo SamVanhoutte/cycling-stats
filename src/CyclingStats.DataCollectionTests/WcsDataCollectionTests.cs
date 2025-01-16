@@ -45,4 +45,32 @@ public class WcsDataCollectionTests
         Assert.True(raceData.Distance > 20);
         Assert.True(raceData.StageRace);
     }
+    
+    [Fact]
+    public async Task TestGetRaceResultsAsync()
+    {
+        var retriever = await TestClientFactory.GetWcsRetrieverAsync();
+        var results = await retriever.GetRaceResultsAsync("tour-down-under" , 2024, "stage-1");
+
+        Assert.NotEmpty(results);
+    }
+    
+    [Fact]
+    public async Task TestGetOneDayRaceResultsAsync()
+    {
+        var retriever = await TestClientFactory.GetWcsRetrieverAsync();
+        var results = await retriever.GetRaceResultsAsync("omloop-het-nieuwsblad" , 2024);
+
+        Assert.NotEmpty(results);
+    }
+    
+    [Fact]
+    public async Task TestGetOneDayRacePointsAsync()
+    {
+        var retriever = await TestClientFactory.GetWcsRetrieverAsync();
+        var results = await retriever.GetRacePointsAsync("omloop-het-nieuwsblad" , 2024);
+
+        Assert.NotEmpty(results);
+        Assert.True(results.First().Rider.Id.Length > 4);
+    }
 }

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace ProcyclingStats;
 
+
 public class PcsStatsCollector : IDataRetriever
 {
     private readonly PcsOptions pcsSettings;
@@ -19,7 +20,7 @@ public class PcsStatsCollector : IDataRetriever
 
     private string BaseUri => pcsSettings.BaseUri;
 
-    public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int top = 50)
+    public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int year, string? stageId = null, int top = 50)
     {
         var race = new RaceDetails();
         var web = new HtmlWeb();
@@ -54,6 +55,11 @@ public class PcsStatsCollector : IDataRetriever
         }
 
         return results;
+    }
+
+    public Task<List<RacerRacePoint>> GetRacePointsAsync(string raceId, int year, string? stageId = null, int top = 50)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<Rider> GetRiderAsync(string riderId)

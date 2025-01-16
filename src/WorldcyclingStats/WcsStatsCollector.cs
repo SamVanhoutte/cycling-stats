@@ -19,11 +19,11 @@ public class WcsStatsCollector : IDataRetriever
 
     private string BaseUri => wcsSettings.BaseUri;
 
-    public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int top = 50)
+    public async Task<List<RacerRaceResult>> GetRaceResultsAsync(string raceId, int year, string? stageId = null, int top = 50)
     {
         var race = new RaceDetails();
         var web = new HtmlWeb();
-        var doc = await web.LoadFromWebAsync($"{BaseUri}/race/{raceId}");
+        var doc = await web.LoadFromWebAsync($"{BaseUri}/race/{raceId}/{year}/results");
 
 
         // Find the table that contains the results
@@ -49,6 +49,45 @@ public class WcsStatsCollector : IDataRetriever
                 },
                 Position = position,
                 DelaySeconds = position == 1 ? 0 : cells[7].GetInnerText().ParseTimeDelay()
+            });
+            position++;
+        }
+
+        return results;
+    }
+    
+    public async Task<List<RacerRacePoint>> GetRacePointsAsync(string raceId, int year, string? stageId = null, int top = 50)
+    {
+        var race = new RaceDetails();
+        var web = new HtmlWeb();
+        var doc = await web.LoadFromWebAsync($"{BaseUri}/game/{raceId}/{year}/statistics/most-points");
+
+
+        // Find the table that contains the results
+        var resultDivNode = doc.DocumentNode.SelectSingleNode("//div[@id='general']");
+        var resultTableNode = resultDivNode.SelectSingleNode("table");
+
+        // Get the rows of the table
+        var rows = resultTableNode.SelectNodes("tr")?.Skip(1).Take(top);
+        var results = new List<RacerRacePoint>();
+
+        var position = 1;
+        // Iterate through each row
+        foreach (var row in rows)
+        {
+            // Get the cells of the row
+            var cells = row.SelectNodes("td");
+            results.Add(new RacerRacePoint
+            {
+                Rider = new Rider
+                {
+                    Name = cells[1].GetInnerText(), Team = cells[4].GetInnerText(),
+                    Id = cells[1].SelectNodes("a").FirstOrDefault().GetAttributeText( "href")
+                },
+                Position = position,
+                Points = cells[9].InnerText.ParseInteger() ?? 0,
+                Stars =     cells[6].SelectNodes("i").Count,
+                //DelaySeconds = position == 1 ? 0 : cells[7].GetInnerText().ParseTimeDelay()
             });
             position++;
         }
