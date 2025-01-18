@@ -2,6 +2,7 @@ using CyclingStats.DataAccess;
 using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
+using CyclingStats.Models;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;

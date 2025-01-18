@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using CyclingStats.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CyclingStats.DataAccess.Entities;

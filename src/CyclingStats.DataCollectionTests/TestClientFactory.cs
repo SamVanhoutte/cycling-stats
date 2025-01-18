@@ -1,8 +1,8 @@
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
+using CyclingStats.Logic.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using ProcyclingStats;
 using WorldcyclingStats;
 
 namespace CyclingStats.DataCollectionTests;
@@ -14,23 +14,20 @@ public class TestClientFactory
         get
         {
             var configBuilder = new ConfigurationBuilder();
-            configBuilder.AddUserSecrets<WcsDataCollectionTests>();
+            configBuilder.AddUserSecrets<DataCollectionTests>();
             var configuration = configBuilder.Build();
             return configuration;
         }
     }
 
-    public static async Task<IDataRetriever> GetWcsRetrieverAsync()
+    public static async Task<IDataRetriever> GetDataRetrieverAsync()
     {
         var wcsConfiguration = new WcsOptions();
+        var pcsConfiguration = new PcsOptions();
         Configuration.GetSection("wcs").Bind(wcsConfiguration);
-        return new WcsStatsCollector(new OptionsWrapper<WcsOptions>(wcsConfiguration));
+        Configuration.GetSection("pcs").Bind(pcsConfiguration);
+        return new StatsCollector(new OptionsWrapper<WcsOptions>(wcsConfiguration), new OptionsWrapper<PcsOptions>(pcsConfiguration));
     }
     
-    public static async Task<IDataRetriever> GetPcsRetrieverAsync()
-    {
-        var pcsConfiguration = new PcsOptions();
-        Configuration.GetSection("pcs").Bind(pcsConfiguration);
-        return new PcsStatsCollector(new OptionsWrapper<PcsOptions>(pcsConfiguration));
-    }
+    
 }

@@ -10,4 +10,5 @@ public interface IDataRetriever
     Task<IEnumerable<Rider>> GetTeamRidersAsync(string teamName);
     Task<IEnumerable<CyclingTeam>> GetTeamsAsync();
     Task<RaceDetails> GetRaceDataAsync(string raceId, int year, string? stageId = null);
+    Task<IDictionary<int, RaceDetails>> GetPastRaceResultsAsync(string raceId, int years, string? stageId = null);
 }
