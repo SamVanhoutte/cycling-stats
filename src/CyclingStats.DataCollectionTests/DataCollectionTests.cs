@@ -29,10 +29,10 @@ public class DataCollectionTests
     {
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
         var raceData = await retriever.GetRaceDataAsync("omloop-het-nieuwsblad", 2024);
-        
-        Assert.True(raceData.DetailsAvailable);
-        Assert.True(raceData.Distance > 20);
-        Assert.False(raceData.StageRace);
+        Assert.Single(raceData);
+        Assert.True(raceData.Single().DetailsAvailable);
+        Assert.True(raceData.Single().Distance > 20);
+        Assert.False(raceData.Single().StageRace);
     }
     
     [Fact]
@@ -41,9 +41,9 @@ public class DataCollectionTests
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
         var raceData = await retriever.GetRaceDataAsync("tour-down-under", 2025, "stage-1");
         
-        Assert.True(raceData.DetailsAvailable);
-        Assert.True(raceData.Distance > 20);
-        Assert.True(raceData.StageRace);
+        Assert.True(raceData.Single().DetailsAvailable);
+        Assert.True(raceData.Single().Distance > 20);
+        Assert.True(raceData.Single().StageRace);
     }
     
     [Fact]
@@ -54,6 +54,39 @@ public class DataCollectionTests
 
         Assert.NotEmpty(results);
     }
+    
+    [Fact]
+    public async Task TestGetStageRaceDataAsync()
+    {
+        var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var results = await retriever.GetRaceDataAsync("4-jours-de-dunkerque" , 2025);
+
+        Assert.NotNull(results);
+    }
+    
+    [Fact]
+    public async Task TestFutureRaceDataAsync()
+    {
+        var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var races = await retriever.GetRaceDataAsync("amstel-gold-race" , 2025);
+
+        Assert.NotNull(races);
+        Assert.NotEmpty(races);
+        Assert.NotNull(races.Single().Classification);
+    }
+    
+    [Fact]
+    public async Task TestFutureStageRaceDataAsync()
+    {
+        var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var races = await retriever.GetRaceDataAsync("4-jours-de-dunkerque" , 2025);
+
+        Assert.NotNull(races);
+        Assert.NotEmpty(races);
+        Assert.Equal(5, races.Count);
+    }
+    
+    
     
     [Fact]
     public async Task TestGetOneDayRaceResultsAsync()

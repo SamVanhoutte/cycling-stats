@@ -8,12 +8,27 @@ namespace CyclingStats.DataAccess.Entities;
 public class Race
 {
     public string Id { get; set; }
+    [Column("StageRace")]
+    public bool IsStageRace { get; set; }
     public string? Name { get; set; }
     public DateTime? RaceDate { get; set; }
     public string? RaceType { get; set; }
     public decimal? Distance { get; set; }
     [Column(TypeName = "nvarchar(20)")]
     public RaceStatus Status { get; set; }
+    public string? ProfileImageUrl { get; set; }
+    public string? PointsScale { get; set; }
+    public string? UciScale { get; set; }
+    public int? ParcoursType { get; set; }
+    public int? ProfileScore { get; set; }
+    public int? RaceRanking { get; set; }
+    public int? Elevation { get; set; }
+    public int? StartlistQuality { get; set; }
+    public string? DecidingMethod { get; set; }
+    public string? Classification { get; set; }
+    public string? Category { get; set; }
     
-    public ICollection<Result>? Results { get; set; }
+    public StageRace? StageRace { get; set; }
+    public ICollection<RaceResult>? Results { get; set; }
+    public string? StageRaceId { get; set; }
 }

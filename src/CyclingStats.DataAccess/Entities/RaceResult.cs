@@ -2,12 +2,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CyclingStats.DataAccess.Entities;
 
-[PrimaryKey("RiderID", "RaceID")]
-public class Result
+[PrimaryKey("RiderId", "RaceId")]
+public class RaceResult
 {
-    public string RiderID { get; set; }
+    public string RiderId { get; set; }
     public Rider Rider { get; set; }
-    public string RaceID { get; set; }
+    public string RaceId { get; set; }
     public Race Race { get; set; }
     public int Position { get; set; }
     public int Gap { get; set; }

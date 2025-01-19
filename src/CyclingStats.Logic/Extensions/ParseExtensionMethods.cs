@@ -22,6 +22,17 @@ public static class ParseExtensionMethods
         return result;
     }
     
+    public static decimal? ParseDecimal(this string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        if (!decimal.TryParse(text, NumberStyles.Any, new NumberFormatInfo { NumberDecimalSeparator = "." }, out var result))
+        {
+            return null;
+        }
+
+        return result;
+    }
+    
     public static DateTime? ParseDateFromText(this string? dateText)
     {
         if (string.IsNullOrWhiteSpace(dateText)) return null;

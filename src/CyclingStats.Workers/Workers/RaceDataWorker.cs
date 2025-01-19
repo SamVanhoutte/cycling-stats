@@ -1,6 +1,7 @@
 using CyclingStats.DataAccess;
 using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
+using CyclingStats.Logic.Exceptions;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
 using Microsoft.Extensions.Options;
@@ -34,13 +35,44 @@ public class RaceDataWorker : BaseWorker
                        sqlSettings.ConnectionString))
             {
                 var races = await ctx.GetAllRacesAsync(RaceStatus.New);
-                foreach (var race in races)
+                if (races.Any())
                 {
+                    var race = races.First();
                     try
                     {
                         logger.LogInformation("Updating data for race {RaceId}", race.Id);
+
                         var raceData = await resultCollector.GetRaceDataAsync(race.Id, DateTime.Now.Year);
-                        await ctx.UpsertRaceDataAsync(raceData, RaceStatus.WaitingForStartList);
+                        if (raceData.FirstOrDefault() == null)
+                        {
+                            Console.WriteLine($"The race {race.Id} was not found");
+                            race.Status = RaceStatus.NotFound;
+                            ctx.Update(race);
+                        }
+                        else
+                        {
+                            StageRace stageRace = null;
+                            if (raceData.Count > 1)
+                            {
+                                // It's a stage race, so we update accordingly
+                                race.IsStageRace = true;
+                                stageRace = new StageRace
+                                {
+                                    StageRaceId = race.Id, StageCount = raceData.Count, Name = race.Name,
+                                    StartDate = raceData.Min(rc => rc.Date), EndDate = raceData.Max(rc => rc.Date)
+                                };
+                                race.StageRace = stageRace;
+                                race.Status = RaceStatus.WaitingForStartList;
+                                ctx.Update(race);
+                            }
+
+                            foreach (var raceDetail in raceData)
+                            {
+                                // Mark these as new to be imported for the next iteration
+                                await ctx.UpsertRaceDataAsync(raceDetail, (raceDetail.StageRace??false) ? RaceStatus.New : RaceStatus.WaitingForStartList);
+                            }
+                        }
+                        logger.LogInformation("Updated data for race {RaceId}", race.Id);
                     }
                     catch (Exception e)
                     {
@@ -48,6 +80,8 @@ public class RaceDataWorker : BaseWorker
                         logger.LogError(e, "Error while scraping race data of {Race}: {Exception}", race.Id, e.Message);
                     }
                 }
+
+                await ctx.SaveChangesAsync(stoppingToken);
             }
         }
         catch (Exception e)

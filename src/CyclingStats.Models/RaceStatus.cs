@@ -6,5 +6,7 @@ public enum RaceStatus
     WaitingForStartList = 1,
     WaitingForResults = 2,
     Finished = 3,
-    Canceled
+    Canceled = 4,
+    Error = -1,
+    NotFound = -4
 }

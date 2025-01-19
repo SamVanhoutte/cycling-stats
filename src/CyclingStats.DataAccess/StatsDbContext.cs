@@ -13,19 +13,29 @@ public class StatsDbContext : DbContext
 
     public DbSet<Rider> Riders { get; set; }
     public DbSet<Race> Races { get; set; }
-    public DbSet<Result> Results { get; set; }
+    public DbSet<StageRace> StageRaces { get; set; }
+    public DbSet<RaceResult> Results { get; set; }
+    public DbSet<RacePoint> Points { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rider>().ToTable("Riders");
         modelBuilder.Entity<Race>().ToTable("Races");
-        modelBuilder.Entity<Result>().ToTable("Results");
+        modelBuilder.Entity<RaceResult>().ToTable("RaceResults");
+        modelBuilder.Entity<RacePoint>().ToTable("RacePoints");
+        modelBuilder.Entity<StageRace>().ToTable("StageRace");
 
         modelBuilder.Entity<Race>()
             .Property(r => r.Status)
             .HasConversion(
                 v => v.ToString(),
-                v => (RaceStatus) Enum.Parse(typeof(RaceStatus), v));
+                v => (RaceStatus)Enum.Parse(typeof(RaceStatus), v))
+            ;
+        modelBuilder.Entity<Race>()
+            .HasOne(r => r.StageRace)
+            .WithOne()
+            .HasForeignKey<Race>(r => r.StageRaceId)
+            .IsRequired(false);
     }
 
     public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null)
@@ -45,10 +55,10 @@ public class StatsDbContext : DbContext
                 var existingResult = await Results.FindAsync(result.Rider.Id, raceDetails.Id);
                 if (existingResult == null)
                 {
-                    await Results.AddAsync(new Result()
+                    await Results.AddAsync(new RaceResult()
                     {
-                        RiderID = result.Rider.Id, RaceID = raceDetails.Id,
-                        Gap = result.DelaySeconds, Position = result.Position
+                        RiderId = result.Rider.Id, RaceId = raceDetails.Id,
+                        Gap = result.DelaySeconds, Position = result.Position,
                     });
                 }
                 else
@@ -73,24 +83,60 @@ public class StatsDbContext : DbContext
             await SaveChangesAsync();
         }
     }
+
     public async Task UpsertRaceDataAsync(Models.RaceDetails raceData, RaceStatus newStatus)
     {
+        if (string.IsNullOrEmpty(raceData.Id))
+            return;
         var existingRace = await Races.FindAsync(raceData.Id);
         if (existingRace == null)
         {
-            await Races.AddAsync(new Race
+            var newRace =
+                new Race
+                {
+                    Id = raceData.Id, Name = raceData.Name, Distance = raceData.Distance,
+                    StartlistQuality = raceData.StartlistQuality,
+                    RaceDate = raceData.Date, RaceType = raceData.RaceType, Status = newStatus,
+                    Category = raceData.Category, IsStageRace = raceData.StageRace ?? false,
+                    UciScale = raceData.UciScale, PointsScale = raceData.PointsScale, Elevation = raceData.Elevation,
+                    DecidingMethod = raceData.DecidingMethod, Classification = raceData.Classification,
+                    ProfileScore = raceData.ProfileScore, RaceRanking = raceData.RaceRanking,
+                    ProfileImageUrl = raceData.ProfileImageUrl, 
+                    ParcoursType = raceData.ParcoursType,
+                    Results = raceData.Results?.Select(r => new RaceResult
+                    {
+                        RiderId = r.Rider.Id, RaceId = raceData.Id, Gap = r.DelaySeconds, Position = r.Position
+                    }).ToList()
+                };
+            if (!string.IsNullOrEmpty(raceData.StageId))
             {
-                Id = raceData.Id, Name = raceData.Name, Distance = raceData.Distance,
-                RaceDate = raceData.Date, RaceType = raceData.RaceType, Status = newStatus
-            });
+                newRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
+            }
+            await Races.AddAsync(newRace);
         }
         else
         {
             existingRace.Name = raceData.Name;
+            existingRace.Status = newStatus;
             existingRace.RaceType = raceData.RaceType;
             existingRace.Distance = raceData.Distance;
             existingRace.RaceDate = raceData.Date;
-            existingRace.Status = newStatus;
+            existingRace.Category = raceData.Category;
+            existingRace.IsStageRace = raceData.StageRace ?? false;
+            existingRace.UciScale = raceData.UciScale;
+            existingRace.PointsScale = raceData.PointsScale;
+            existingRace.Elevation = raceData.Elevation;
+            existingRace.DecidingMethod = raceData.DecidingMethod;
+            existingRace.Classification = raceData.Classification;
+            existingRace.ProfileScore = raceData.ProfileScore;
+            existingRace.RaceRanking = raceData.RaceRanking;
+            existingRace.ProfileImageUrl = raceData.ProfileImageUrl;
+            existingRace.ParcoursType = raceData.ParcoursType;
+            existingRace.StartlistQuality = raceData.StartlistQuality;
+            if(!string.IsNullOrEmpty(raceData.StageId))
+            {
+                existingRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
+            }
             Races.Update(existingRace);
         }
 

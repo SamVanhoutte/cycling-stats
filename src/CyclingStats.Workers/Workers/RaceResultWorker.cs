@@ -40,12 +40,16 @@ public class RaceResultWorker : BaseWorker
                     try
                     {
                         var raceData = await resultCollector.GetRaceDataAsync(race.Id, DateTime.Now.Year);
-                        raceData.Results = await resultCollector.GetRaceResultsAsync(race.Id, 200);
-                        if (raceData.Results.Any())
+                        foreach (var raceDetail in raceData)
                         {
-                            await ctx.UpsertRaceResultsAsync(raceData);
-                            logger.LogInformation(
-                                "Saved {ResultCount} results of {RaceName} to the data store", raceData.Results.Count(), raceData.Name);
+                            raceDetail.Results = await resultCollector.GetRaceResultsAsync(race.Id, 200);
+                            if (raceDetail.Results.Any())
+                            {
+                                await ctx.UpsertRaceResultsAsync(raceDetail);
+                                logger.LogInformation(
+                                    "Saved {ResultCount} results of {RaceName} to the data store", raceDetail.Results.Count(), raceDetail.Name);
+                            }
+                            
                         }
                     }
                     catch (Exception e)

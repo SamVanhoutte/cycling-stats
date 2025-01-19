@@ -30,10 +30,16 @@ public abstract class BaseWorker : BackgroundService
             {
                 Logger?.LogInformation(TaskDescription);
                 await ProcessAsync(stoppingToken);
+                if (currentSchedule.OneTimeJob ?? false)
+                {
+                    Logger?.LogInformation("{workerName} is a one time job. Break the loop", WorkerName);
+                    break;
+                }
             }
             else
             {
                 Logger?.LogInformation("{workerName} is disabled", WorkerName);
+                break;
             }
 
             await Task.Delay(TimeSpan.FromSeconds(currentSchedule.IntervalSeconds), stoppingToken);
