@@ -1,6 +1,7 @@
 CREATE TABLE [dbo].[Races]
 (
   [Id] NVARCHAR(255) NOT NULL PRIMARY KEY,
+  [PcsId] NVARCHAR(255) NULL,
   [StageId] NVARCHAR(64) NULL,
   [StageRaceId] NVARCHAR(64) NULL,
   [StageRace] BIT NOT NULL,
@@ -19,5 +20,8 @@ CREATE TABLE [dbo].[Races]
   [StartlistQuality] INT NULL,
   [DecidingMethod] NVARCHAR(128) NULL,
   [Classification] NVARCHAR(128) NULL,
-  [Category] NVARCHAR(128) NULL
+  [Category] NVARCHAR(128) NULL,
+  [PcsUrl] NVARCHAR(255) NULL,
+  [WcsUrl] NVARCHAR(255) NULL,
+  [Updated] DATETIME2 NULL
 )

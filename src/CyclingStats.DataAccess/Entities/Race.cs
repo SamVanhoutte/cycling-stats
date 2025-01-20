@@ -8,6 +8,9 @@ namespace CyclingStats.DataAccess.Entities;
 public class Race
 {
     public string Id { get; set; }
+    public string? PcsId { get; set; }
+    public string? PcsRaceId => string.IsNullOrEmpty( PcsId) ?  Id : PcsId; 
+
     [Column("StageRace")]
     public bool IsStageRace { get; set; }
     public string? Name { get; set; }
@@ -31,4 +34,7 @@ public class Race
     public StageRace? StageRace { get; set; }
     public ICollection<RaceResult>? Results { get; set; }
     public string? StageRaceId { get; set; }
+    public DateTime? Updated { get; set; }
+    public string? PcsUrl { get; set; }
+    public string? WcsUrl { get; set; }
 }

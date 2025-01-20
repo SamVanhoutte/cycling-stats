@@ -35,6 +35,7 @@ public class RaceDataWorker : BaseWorker
                        sqlSettings.ConnectionString))
             {
                 var races = await ctx.GetAllRacesAsync(RaceStatus.New);
+                races = races.Where(r => (r.Updated?.AddHours(1) < DateTime.Now)).ToList();
                 if (races.Any())
                 {
                     var race = races.First();
@@ -42,11 +43,29 @@ public class RaceDataWorker : BaseWorker
                     {
                         logger.LogInformation("Updating data for race {RaceId}", race.Id);
 
-                        var raceData = await resultCollector.GetRaceDataAsync(race.Id, DateTime.Now.Year);
+                        var raceData = await resultCollector.GetRaceDataAsync(race);
                         if (raceData.FirstOrDefault() == null)
                         {
-                            Console.WriteLine($"The race {race.Id} was not found");
-                            race.Status = RaceStatus.NotFound;
+                            Console.WriteLine($"The race {race.PcsRaceId} was not found");
+                            if (string.IsNullOrEmpty(race.PcsId) && !string.IsNullOrEmpty(race.Name))
+                            {
+                                var pcsId = await resultCollector.GetPcsIdAsync(race);
+                                if (!string.IsNullOrEmpty(pcsId))
+                                {
+                                    logger.LogDebug($"PCS status looked up as {pcsId}");
+                                    race.Status = RaceStatus.New;
+                                    race.PcsId = pcsId;
+                                }
+                                else
+                                {
+                                    race.Status = RaceStatus.NotFound;
+                                }
+                            }
+                            else
+                            {
+                                race.Status = RaceStatus.NotFound;
+                            }
+
                             ctx.Update(race);
                         }
                         else
@@ -56,12 +75,12 @@ public class RaceDataWorker : BaseWorker
                             {
                                 // It's a stage race, so we update accordingly
                                 race.IsStageRace = true;
-                                stageRace = new StageRace
-                                {
-                                    StageRaceId = race.Id, StageCount = raceData.Count, Name = race.Name,
-                                    StartDate = raceData.Min(rc => rc.Date), EndDate = raceData.Max(rc => rc.Date)
-                                };
-                                race.StageRace = stageRace;
+                                // stageRace = new StageRace
+                                // {
+                                //     StageRaceId = race.Id, StageCount = raceData.Count, Name = race.Name,
+                                //     StartDate = raceData.Min(rc => rc.Date), EndDate = raceData.Max(rc => rc.Date)
+                                // };
+                                // race.StageRace = stageRace;
                                 race.Status = RaceStatus.WaitingForStartList;
                                 ctx.Update(race);
                             }
@@ -69,9 +88,17 @@ public class RaceDataWorker : BaseWorker
                             foreach (var raceDetail in raceData)
                             {
                                 // Mark these as new to be imported for the next iteration
-                                await ctx.UpsertRaceDataAsync(raceDetail, (raceDetail.StageRace??false) ? RaceStatus.New : RaceStatus.WaitingForStartList);
+                                // raceDetail.Id = race.Id;
+                                // raceDetail.PcsId = race.PcsId;
+                                await ctx.UpsertRaceDataAsync(raceDetail,
+                                    string.IsNullOrEmpty(raceDetail.Classification)
+                                        ? RaceStatus.New
+                                        : RaceStatus.WaitingForStartList);
                             }
                         }
+
+                        await ctx.SaveChangesAsync(stoppingToken);
+
                         logger.LogInformation("Updated data for race {RaceId}", race.Id);
                     }
                     catch (Exception e)
@@ -80,8 +107,10 @@ public class RaceDataWorker : BaseWorker
                         logger.LogError(e, "Error while scraping race data of {Race}: {Exception}", race.Id, e.Message);
                     }
                 }
-
-                await ctx.SaveChangesAsync(stoppingToken);
+                else
+                {
+                    Console.WriteLine("No new races found to update");
+                }
             }
         }
         catch (Exception e)

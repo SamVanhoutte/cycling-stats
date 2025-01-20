@@ -24,24 +24,40 @@ public class RaceDetails
     public List<RacerRacePoint>? Points { get; set; }
     public bool? StageRace => RaceType?.Contains("Multi-day race");
     public bool DetailsAvailable => Name != null && Date != DateTime.MinValue && Distance != 0;
+    public string? PcsId { get; set; }
+    public string? PcsUrl { get; set; }
+    public string? WcsUrl { get; set; }
 
     public static string GetRaceIdFromUrl(string url)
     {
-        if (url.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
+        if (string.IsNullOrEmpty(url)) return "";
+        var paths = url.Split("/");
+        paths = paths
+            .SkipWhile(p => !p.Equals("race", StringComparison.InvariantCultureIgnoreCase))
+            .Skip(1)
+            .ToArray();
+        
+        if (!int.TryParse(paths.Last(), out _) && !paths.Last().StartsWith("stage", StringComparison.InvariantCultureIgnoreCase))
         {
-            var paths = url.Split("/");
-            // Check if the url ends with a year
-            var suffix = url[^4..];
-            if (int.TryParse(suffix, out _))
-            {
-                url = paths.SkipLast(1).LastOrDefault() ?? "";
-            }
-            else
-            {
-                url = paths.LastOrDefault() ?? "";
-            }
+            paths = paths.Append(DateTime.UtcNow.Year.ToString()).ToArray();
         }
-
-        return url;
+        return string.Join('/', paths);
+        // if (url.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
+        // {
+        //     var paths = url.Split("/");
+        //     // Check if the url ends with a year
+        //     var suffix = url[^4..];
+        //     if (int.TryParse(suffix, out _))
+        //     {
+        //         url = paths.SkipLast(1).LastOrDefault() ?? "";
+        //     }
+        //     else
+        //     {
+        //         url = paths.LastOrDefault() ?? "";
+        //     }
+        // }
+        // // if(url.)
+        // var subPaths = url.Split("/");
+        // return subPaths.LastOrDefault() ?? "";
     }
 }

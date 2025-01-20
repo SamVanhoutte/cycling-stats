@@ -95,14 +95,15 @@ public class StatsDbContext : DbContext
                 new Race
                 {
                     Id = raceData.Id, Name = raceData.Name, Distance = raceData.Distance,
-                    StartlistQuality = raceData.StartlistQuality,
+                    StartlistQuality = raceData.StartlistQuality, PcsId = raceData.PcsId,
                     RaceDate = raceData.Date, RaceType = raceData.RaceType, Status = newStatus,
                     Category = raceData.Category, IsStageRace = raceData.StageRace ?? false,
                     UciScale = raceData.UciScale, PointsScale = raceData.PointsScale, Elevation = raceData.Elevation,
                     DecidingMethod = raceData.DecidingMethod, Classification = raceData.Classification,
                     ProfileScore = raceData.ProfileScore, RaceRanking = raceData.RaceRanking,
-                    ProfileImageUrl = raceData.ProfileImageUrl, 
-                    ParcoursType = raceData.ParcoursType,
+                    ProfileImageUrl = raceData.ProfileImageUrl,
+                    PcsUrl = raceData.PcsUrl, WcsUrl = raceData.WcsUrl,
+                    ParcoursType = raceData.ParcoursType, Updated = DateTime.Now,
                     Results = raceData.Results?.Select(r => new RaceResult
                     {
                         RiderId = r.Rider.Id, RaceId = raceData.Id, Gap = r.DelaySeconds, Position = r.Position
@@ -116,6 +117,7 @@ public class StatsDbContext : DbContext
         }
         else
         {
+            existingRace.PcsId = raceData.PcsId;
             existingRace.Name = raceData.Name;
             existingRace.Status = newStatus;
             existingRace.RaceType = raceData.RaceType;
@@ -126,6 +128,9 @@ public class StatsDbContext : DbContext
             existingRace.UciScale = raceData.UciScale;
             existingRace.PointsScale = raceData.PointsScale;
             existingRace.Elevation = raceData.Elevation;
+            existingRace.Updated = DateTime.Now;
+            existingRace.PcsUrl = raceData.PcsUrl;
+            existingRace.WcsUrl = raceData.WcsUrl;
             existingRace.DecidingMethod = raceData.DecidingMethod;
             existingRace.Classification = raceData.Classification;
             existingRace.ProfileScore = raceData.ProfileScore;

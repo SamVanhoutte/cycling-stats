@@ -24,6 +24,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<RaceStartListWorker>();
         services.AddHostedService<RaceDataWorker>();
         services.AddHostedService<CalendarImportJob>();
+        services.AddHostedService<RaceIdMatchWorker>();
     })
     .Build();
 

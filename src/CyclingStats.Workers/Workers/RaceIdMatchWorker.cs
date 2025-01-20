@@ -1,5 +1,4 @@
 using CyclingStats.DataAccess;
-using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
@@ -7,26 +6,24 @@ using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;
 
-public class RaceResultWorker : BaseWorker
+public class RaceIdMatchWorker : BaseWorker
 {
-    private readonly ILogger<RaceResultWorker> logger;
+    private readonly ILogger<RaceIdMatchWorker> logger;
     private readonly IDataRetriever resultCollector;
 
-    public RaceResultWorker(
-        ILogger<RaceResultWorker> logger,
+    public RaceIdMatchWorker(
+        ILogger<RaceIdMatchWorker> logger,
         IDataRetriever resultCollector,
         IOptions<ScheduleOptions> scheduleOptions,
-        IOptions<SqlOptions> sqlSettings) :base(scheduleOptions, sqlSettings)
+        IOptions<SqlOptions> sqlSettings) : base(scheduleOptions, sqlSettings)
     {
         this.logger = logger;
         this.resultCollector = resultCollector;
     }
-
-
-    protected override string TaskDescription => "Collecting race results.";
-    protected override string WorkerName => "RaceResults";
+    
+    protected override string TaskDescription => "Tries to get the PCS id for races that are not found";
+    protected override string WorkerName => nameof(RaceIdMatchWorker);
     protected override ILogger Logger => logger;
-
     protected override async Task ProcessAsync(CancellationToken stoppingToken)
     {
         try
@@ -34,23 +31,27 @@ public class RaceResultWorker : BaseWorker
             using (var ctx = StatsDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
-                var races = await ctx.GetAllRacesAsync(RaceStatus.WaitingForResults);
-                foreach (var race in races.Where(r => r.RaceDate < DateTime.Now))
+                var races = await ctx.GetAllRacesAsync(RaceStatus.NotFound);
+                foreach (var race in races)
                 {
+                    logger.LogInformation("Getting id for race {RaceId}", race.Id);
+
                     try
                     {
-                        var raceData = await resultCollector.GetRaceDataAsync(race);
-                        foreach (var raceDetail in raceData)
+                        var pcsId = await resultCollector.GetPcsIdAsync(race);
+                        if (string.IsNullOrEmpty(pcsId))
                         {
-                            raceDetail.Results = await resultCollector.GetRaceResultsAsync(race.Id, 200);
-                            if (raceDetail.Results.Any())
-                            {
-                                await ctx.UpsertRaceResultsAsync(raceDetail);
-                                logger.LogInformation(
-                                    "Saved {ResultCount} results of {RaceName} to the data store", raceDetail.Results.Count(), raceDetail.Name);
-                            }
-                            
+                            race.Status = RaceStatus.Error;
+                            Console.WriteLine($"No PCS id found for race {race.Id}");
                         }
+                        else
+                        {
+                            Console.WriteLine($"PCS id found for race {race.Id}: {pcsId}");;
+                            race.PcsId = pcsId;
+                            race.Status = RaceStatus.New;
+                        }
+                        ctx.Races.Update(race);
+                        await ctx.SaveChangesAsync(stoppingToken);
                     }
                     catch (Exception e)
                     {

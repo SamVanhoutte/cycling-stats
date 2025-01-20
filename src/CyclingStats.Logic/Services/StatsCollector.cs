@@ -160,16 +160,16 @@ public class StatsCollector : IDataRetriever
         throw new NotImplementedException();
     }
 
-    public async Task<List<RaceDetails>> GetRaceDataAsync(string raceId, int year, string? stageId = null)
+    public async Task<List<RaceDetails>> GetRaceDataAsync(Race race, string? stageId = null)
     {
         if (string.IsNullOrEmpty(stageId))
         {
             var races = new List<RaceDetails> { };
-            var isStageRace = await IsStageRaceAsync(raceId, year);
+            var isStageRace = await IsStageRaceAsync(race);
             if (isStageRace)
             {
                 var web = new HtmlWeb();
-                var racePageUri = $"{PcsBaseUri}/race/{raceId}/{year}";
+                var racePageUri = $"{PcsBaseUri}/race/{race.PcsRaceId}";
                 var doc = await web.LoadFromWebAsync(racePageUri);
                 var stageRaceNode = doc.DocumentNode.SelectSingleNode("//h3[text()='Stages']");
                 var stageTable = stageRaceNode.SelectSingleNode("..//table");
@@ -185,8 +185,12 @@ public class StatsCollector : IDataRetriever
                         {
                             var raceCol = cols[3];
                             var date = cols[0];
-                            raceDetails.Id =
-                                RaceDetails.GetRaceIdFromUrl(raceCol.SelectSingleNode("a").GetAttributeText("href"));
+                            var link = raceCol.SelectSingleNode("a").GetAttributeText("href");
+                            if (string.IsNullOrEmpty(link))
+                                break;
+                            stageId = link.Split("/").Last();
+                            raceDetails.Id = string.IsNullOrEmpty(stageId) ? race.Id : $"{race.Id}/{stageId}";
+                            raceDetails.PcsId = RaceDetails.GetRaceIdFromUrl(link);
                             raceDetails.Name = raceCol.SelectSingleNode("a").GetInnerText();
                             raceDetails.Distance = cols[4].GetInnerText().ParseDecimal();
                             raceDetails.Status = RaceStatus.New;
@@ -202,16 +206,16 @@ public class StatsCollector : IDataRetriever
             }
         }
 
-        var details = await GetDayRaceDataAsync(raceId, year, stageId);
+        var details = await GetDayRaceDataAsync(race, stageId);
         return [details];
     }
 
-    private async Task<RaceDetails> GetDayRaceDataAsync(string raceId, int year, string? stageId = null)
+    private async Task<RaceDetails> GetDayRaceDataAsync(Race raceInfo, string? stageId = null)
     {
         var web = new HtmlWeb();
         var racePageUri = string.IsNullOrEmpty(stageId)
-            ? $"{PcsBaseUri}/race/{raceId}/{year}/result"
-            : $"{PcsBaseUri}/race/{raceId}/{year}/{stageId}/result";
+            ? $"{PcsBaseUri}/race/{raceInfo.PcsRaceId}/result"
+            : $"{PcsBaseUri}/race/{raceInfo.PcsRaceId}/{stageId}/result";
         var doc = await web.LoadFromWebAsync(racePageUri);
 
         var pageTitle = doc.DocumentNode.SelectSingleNode("//h1").GetInnerText();
@@ -223,7 +227,8 @@ public class StatsCollector : IDataRetriever
         // Get the rows of the table
         var race = new RaceDetails
         {
-            Name = pageTitle, StageId = stageId, Id = raceId
+            Name = pageTitle, StageId = stageId, Id = raceInfo.Id, PcsId = raceInfo.PcsRaceId,
+            PcsUrl = $"{PcsBaseUri}/race/{raceInfo.PcsRaceId}", WcsUrl = $"{WcsBaseUri}/race/{raceInfo.Id}",
         };
         var canceledElement = doc.DocumentNode.SelectSingleNode("//div[@class='red fs16']");
         if (canceledElement != null)
@@ -233,10 +238,6 @@ public class StatsCollector : IDataRetriever
                 race.Status = RaceStatus.Canceled;
                 return race;
             }
-        }
-
-        if (infoItems == null)
-        {
         }
 
         foreach (var infoItem in infoItems)
@@ -310,25 +311,26 @@ public class StatsCollector : IDataRetriever
         return race;
     }
 
-    private async Task<bool> IsStageRaceAsync(string raceId, int year)
+    private async Task<bool> IsStageRaceAsync(Race race)
     {
         var web = new HtmlWeb();
-        var racePageUri = $"{PcsBaseUri}/race/{raceId}/{year}";
+        var racePageUri = $"{PcsBaseUri}/race/{race.PcsRaceId}";
         var doc = await web.LoadFromWebAsync(racePageUri);
         var stageRaceNode = doc.DocumentNode.SelectSingleNode("//h3[text()='Stages']");
         return stageRaceNode != null;
     }
 
-    public async Task<IDictionary<int, RaceDetails>> GetPastRaceResultsAsync(string raceId, int years,
+    public async Task<IDictionary<int, RaceDetails>> GetPastRaceResultsAsync(Race race, int years,
         string? stageId = null)
     {
+        //TODO : years should be considered in the loops
         var fullResultSet = new Dictionary<int, RaceDetails> { };
         for (var yearToCheck = DateTime.Now.Year; yearToCheck > DateTime.Now.Year - years; yearToCheck--)
         {
-            var results = await GetRaceDataAsync(raceId, yearToCheck, stageId);
+            var results = await GetRaceDataAsync(race, stageId);
             var raceDetails = results.Single();
-            raceDetails.Results = await GetRaceResultsAsync(raceId, yearToCheck, stageId, -1);
-            raceDetails.Points = await GetRacePointsAsync(raceId, yearToCheck, stageId, -1);
+            raceDetails.Results = await GetRaceResultsAsync(race.Id, yearToCheck, stageId, -1);
+            raceDetails.Points = await GetRacePointsAsync(race.Id, yearToCheck, stageId, -1);
             fullResultSet.Add(yearToCheck, raceDetails);
         }
 
@@ -356,6 +358,27 @@ public class StatsCollector : IDataRetriever
         }
 
         return races;
+    }
+
+    public async Task<string?> GetPcsIdAsync(Race race)
+    {
+        //https://www.procyclingstats.com/search.php?term=Acht+van+Bladel
+        var searchUrl = $"{PcsBaseUri}/search.php?term={race.Name.Replace(" ", "+")}";
+        var web = new HtmlWeb();
+        var doc = await web.LoadFromWebAsync(searchUrl);
+
+        var searchNode = doc.DocumentNode.SelectSingleNode("//h3[text()='Search results']");
+        var searchResults = searchNode.SelectNodes("../ul/li");
+        foreach (var searchResult in searchResults)
+        {
+            var link = searchResult.SelectSingleNode("a").GetAttributeText("href");
+            if (link.Contains("race/", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return RaceDetails.GetRaceIdFromUrl(link);
+            }
+        }
+
+        return null;
     }
 
 
