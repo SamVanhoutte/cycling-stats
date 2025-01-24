@@ -1,12 +1,13 @@
 using CyclingStats.DataAccess;
-using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
+using CyclingStats.Models;
+using CyclingStats.Workers.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;
 
-public class RaceStartListWorker : BaseWorker
+public class RaceStartListWorker : BaseWorker<BatchConfig>
 {
     private readonly ILogger<RaceStartListWorker> logger;
     private readonly IDataRetriever resultCollector;
@@ -25,7 +26,7 @@ public class RaceStartListWorker : BaseWorker
     protected override string WorkerName => "RaceStartList";
     protected override ILogger Logger => logger;
 
-    protected override async Task ProcessAsync(CancellationToken stoppingToken)
+    protected override async Task<bool> ProcessAsync(CancellationToken stoppingToken, BatchConfig config)
     {
         try
         {
@@ -53,5 +54,8 @@ public class RaceStartListWorker : BaseWorker
             Console.WriteLine(e);
             logger.LogError(e, "Error while updating race status: {Exception}", e.Message);
         }
+
+        return true;
     }
+    
 }

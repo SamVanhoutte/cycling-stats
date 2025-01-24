@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldcyclingStats", "Worldc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclingStats.DataCollectionTests", "CyclingStats.DataCollectionTests\CyclingStats.DataCollectionTests.csproj", "{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclingStats.WebAPI", "CyclingStats.WebAPI\CyclingStats.WebAPI.csproj", "{A7D74125-0914-458F-8673-9BB166B8106F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03E7A0B2-946F-4796-85FE-E3F31F7EB51F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7D74125-0914-458F-8673-9BB166B8106F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7D74125-0914-458F-8673-9BB166B8106F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7D74125-0914-458F-8673-9BB166B8106F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7D74125-0914-458F-8673-9BB166B8106F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[Results]
+CREATE TABLE [dbo].[RaceResults]
 (
   [RiderId] NVARCHAR(255) NOT NULL,
   [RaceId] NVARCHAR(255) NOT NULL,

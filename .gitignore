@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+.DS_Store
+data/.python-version
+.python-version
+
 **/azuresettings.env
 **/appsettings.json
 
@@ -352,4 +356,4 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-.DS_Store
+src/CyclingStats.Workers/.python-version

@@ -12,6 +12,7 @@
         <Authors>CyclingStats.Workers</Authors>
         <Company>CyclingStats.Workers</Company>
         <Product>CyclingStats.Workers</Product>
+        <UserSecretsId>2cea4374-9172-4792-b48e-a2ff9fbcad0e</UserSecretsId>
     </PropertyGroup>
     <PropertyGroup>
         <ServerGarbageCollection>true</ServerGarbageCollection>

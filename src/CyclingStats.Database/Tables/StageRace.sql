@@ -1,0 +1,8 @@
+CREATE TABLE [dbo].[StageRace]
+(
+  [StageRaceId] NVARCHAR(255) NOT NULL PRIMARY KEY,
+  [Name] NVARCHAR(255) NULL,
+  [StageCount] INT NOT NULL,
+  [StartDate] DATETIME2 NULL,
+  [EndDate] DATETIME2 NULL
+)
