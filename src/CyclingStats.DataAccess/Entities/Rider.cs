@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using CyclingStats.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CyclingStats.DataAccess.Entities;
@@ -7,12 +9,23 @@ namespace CyclingStats.DataAccess.Entities;
 public class Rider
 {
     public string Id { get; set; }
+    public string? PcsId { get; set; }
     public string Name { get; set; }
     public string Team { get; set; }
-    public int Sprinter { get; set; }
-    public int Puncheur { get; set; }
-    public int OneDay { get; set; }
-    public int Climber { get; set; }
-    public int AllRounder { get; set; }
-    public int TimeTrialist { get; set; }
+    public int BirthYear{get;set;}
+    public int Weight{get;set;}
+    public int Height{get;set;}
+    public int Ranking2019{get;set;}
+    public int Ranking2020{get;set;}
+    public int Ranking2021{get;set;}
+    public int Ranking2022{get;set;}
+    public int Ranking2023{get;set;}
+    public int Ranking2024{get;set;}
+    public int Ranking2025{get;set;}
+    public int Ranking2026{get;set;}
+    public virtual ICollection<RiderProfile>? Profiles { get; set; }
+    public bool DetailsCompleted { get; set; }
+    public DateTime Updated { get; set; }
+    [Column(TypeName = "nvarchar(20)")]
+    public RiderStatus Status { get; set; }
 }

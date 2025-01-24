@@ -1,14 +1,15 @@
 using CyclingStats.DataAccess;
 using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
-using CyclingStats.Logic.Exceptions;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
+using CyclingStats.Models.Extensions;
+using CyclingStats.Workers.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;
 
-public class RaceDataWorker : BaseWorker
+public class RaceDataWorker : BaseWorker<BatchConfig>
 {
     private readonly ILogger<RaceDataWorker> logger;
     private readonly IDataRetriever resultCollector;
@@ -27,15 +28,19 @@ public class RaceDataWorker : BaseWorker
     protected override string WorkerName => "RaceData";
     protected override ILogger Logger => logger;
 
-    protected override async Task ProcessAsync(CancellationToken stoppingToken)
+    protected override async Task<bool> ProcessAsync(CancellationToken stoppingToken, BatchConfig config)
     {
         try
         {
             using (var ctx = StatsDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
-                var races = await ctx.GetAllRacesAsync(RaceStatus.New);
-                races = races.Where(r => (r.Updated?.AddHours(1) < DateTime.Now)).ToList();
+                // Get incompleted races
+                var races = await ctx.GetAllRacesAsync(detailsCompleted:false, statusToExclude: RaceStatus.NotFound);
+                // Filter out races that are further than 1 month in the future
+                races = races.Where(r=>r.RaceDate == null || r.RaceDate < DateTime.Now.AddMonths(1)).ToList();
+                races = races.Where(r=>r.Status!= RaceStatus.Error &&r.Status!= RaceStatus.Canceled ).ToList();
+                races = races.Where(r => (r.Updated == null || r.Updated?.AddHours(config.HoursAge) < DateTime.Now)).ToList();
                 if (races.Any())
                 {
                     var race = races.First();
@@ -44,15 +49,18 @@ public class RaceDataWorker : BaseWorker
                         logger.LogInformation("Updating data for race {RaceId}", race.Id);
 
                         var raceData = await resultCollector.GetRaceDataAsync(race);
+                        // The race id does not seem to be found on PCS
                         if (raceData.FirstOrDefault() == null)
                         {
-                            Console.WriteLine($"The race {race.PcsRaceId} was not found");
                             if (string.IsNullOrEmpty(race.PcsId) && !string.IsNullOrEmpty(race.Name))
                             {
-                                var pcsId = await resultCollector.GetPcsIdAsync(race);
+                                var pcsId = await resultCollector.GetPcsRaceIdAsync(race);
                                 if (!string.IsNullOrEmpty(pcsId))
                                 {
-                                    logger.LogDebug($"PCS status looked up as {pcsId}");
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine($"PCS status looked up as {pcsId}");
+                                    Console.ResetColor();
+                                    logger.LogInformation($"PCS status looked up as {pcsId}");
                                     race.Status = RaceStatus.New;
                                     race.PcsId = pcsId;
                                 }
@@ -63,6 +71,10 @@ public class RaceDataWorker : BaseWorker
                             }
                             else
                             {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine($"The race {race.PcsRaceId} was not found");
+                                Console.ResetColor();
+                                logger.LogWarning($"The race {race.PcsRaceId} was not found");
                                 race.Status = RaceStatus.NotFound;
                             }
 
@@ -70,7 +82,6 @@ public class RaceDataWorker : BaseWorker
                         }
                         else
                         {
-                            StageRace stageRace = null;
                             if (raceData.Count > 1)
                             {
                                 // It's a stage race, so we update accordingly
@@ -81,7 +92,8 @@ public class RaceDataWorker : BaseWorker
                                 //     StartDate = raceData.Min(rc => rc.Date), EndDate = raceData.Max(rc => rc.Date)
                                 // };
                                 // race.StageRace = stageRace;
-                                race.Status = RaceStatus.WaitingForStartList;
+                                race.Status = string.IsNullOrEmpty( race.ProfileImageUrl) ? RaceStatus.WaitingForDetails:  RaceStatus.WaitingForStartList;
+                                race.DetailsCompleted = true;
                                 ctx.Update(race);
                             }
 
@@ -90,9 +102,10 @@ public class RaceDataWorker : BaseWorker
                                 // Mark these as new to be imported for the next iteration
                                 // raceDetail.Id = race.Id;
                                 // raceDetail.PcsId = race.PcsId;
+                                raceDetail.DetailsCompleted = !string.IsNullOrEmpty(raceDetail.ProfileImageUrl);
                                 await ctx.UpsertRaceDataAsync(raceDetail,
                                     string.IsNullOrEmpty(raceDetail.Classification)
-                                        ? RaceStatus.New
+                                        ? RaceStatus.WaitingForDetails
                                         : RaceStatus.WaitingForStartList);
                             }
                         }
@@ -110,6 +123,7 @@ public class RaceDataWorker : BaseWorker
                 else
                 {
                     Console.WriteLine("No new races found to update");
+                    return false;
                 }
             }
         }
@@ -118,5 +132,7 @@ public class RaceDataWorker : BaseWorker
             Console.WriteLine(e);
             logger.LogError(e, "Error while scraping race data: {Exception}", e.Message);
         }
+
+        return true;
     }
 }

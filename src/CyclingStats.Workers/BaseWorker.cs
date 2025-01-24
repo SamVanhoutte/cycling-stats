@@ -1,9 +1,10 @@
 using CyclingStats.Logic.Configuration;
+using CyclingStats.Workers.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers;
 
-public abstract class BaseWorker : BackgroundService
+public abstract class BaseWorker<T> : BackgroundService where T: IWorkerConfig, new()
 {
     protected readonly ScheduleOptions scheduleOptions;
     protected readonly SqlOptions sqlSettings;
@@ -19,7 +20,7 @@ public abstract class BaseWorker : BackgroundService
     protected abstract string TaskDescription { get; }
     protected abstract string WorkerName { get; }
     protected abstract ILogger Logger { get; }
-    protected abstract Task ProcessAsync(CancellationToken stoppingToken);
+    protected abstract Task<bool> ProcessAsync(CancellationToken stoppingToken, T config);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -28,21 +29,31 @@ public abstract class BaseWorker : BackgroundService
         {
             if (!currentSchedule.Disabled)
             {
+                T config = new T();
+                config.LoadSettings(currentSchedule);
                 Logger?.LogInformation(TaskDescription);
-                await ProcessAsync(stoppingToken);
+                var keepSpinning = await ProcessAsync(stoppingToken, config);
                 if (currentSchedule.OneTimeJob ?? false)
                 {
                     Logger?.LogInformation("{workerName} is a one time job. Break the loop", WorkerName);
-                    break;
+                    return;
+                }
+
+                if (!keepSpinning)
+                {
+                    Logger?.LogInformation("{workerName} indicated to stop the loop.", WorkerName);
+                    return;
                 }
             }
             else
             {
                 Logger?.LogInformation("{workerName} is disabled", WorkerName);
-                break;
+                return ;
             }
 
             await Task.Delay(TimeSpan.FromSeconds(currentSchedule.IntervalSeconds), stoppingToken);
         }
     }
+    
+    
 }

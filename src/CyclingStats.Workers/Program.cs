@@ -1,12 +1,8 @@
-﻿using CyclingStats.Logic;
-using CyclingStats.Logic.Configuration;
+﻿using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Logic.Services;
 using CyclingStats.Workers.Actions;
 using CyclingStats.Workers.Workers;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using WorldcyclingStats;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
@@ -25,6 +21,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<RaceDataWorker>();
         services.AddHostedService<CalendarImportJob>();
         services.AddHostedService<RaceIdMatchWorker>();
+        services.AddHostedService<RacePointsWorker>();
+        services.AddHostedService<RiderProfileWorker>();
+        
     })
     .Build();
 

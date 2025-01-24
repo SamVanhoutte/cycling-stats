@@ -3,7 +3,6 @@ using CyclingStats.Logic.Interfaces;
 using CyclingStats.Logic.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using WorldcyclingStats;
 
 namespace CyclingStats.DataCollectionTests;
 

@@ -1,5 +1,7 @@
+using System.ComponentModel.Design.Serialization;
 using CyclingStats.DataAccess.Entities;
 using CyclingStats.Models;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Rider = CyclingStats.DataAccess.Entities.Rider;
 
@@ -12,18 +14,22 @@ public class StatsDbContext : DbContext
     }
 
     public DbSet<Rider> Riders { get; set; }
+
     public DbSet<Race> Races { get; set; }
-    public DbSet<StageRace> StageRaces { get; set; }
+
+    // public DbSet<StageRace> StageRaces { get; set; }
     public DbSet<RaceResult> Results { get; set; }
     public DbSet<RacePoint> Points { get; set; }
+    public DbSet<RiderProfile> RiderProfiles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rider>().ToTable("Riders");
+        modelBuilder.Entity<RiderProfile>().ToTable("RiderProfiles");
         modelBuilder.Entity<Race>().ToTable("Races");
         modelBuilder.Entity<RaceResult>().ToTable("RaceResults");
         modelBuilder.Entity<RacePoint>().ToTable("RacePoints");
-        modelBuilder.Entity<StageRace>().ToTable("StageRace");
+        // modelBuilder.Entity<StageRace>().ToTable("StageRace");
 
         modelBuilder.Entity<Race>()
             .Property(r => r.Status)
@@ -31,25 +37,94 @@ public class StatsDbContext : DbContext
                 v => v.ToString(),
                 v => (RaceStatus)Enum.Parse(typeof(RaceStatus), v))
             ;
-        modelBuilder.Entity<Race>()
-            .HasOne(r => r.StageRace)
-            .WithOne()
-            .HasForeignKey<Race>(r => r.StageRaceId)
-            .IsRequired(false);
+
+        modelBuilder
+            .Entity<Rider>()
+            .HasMany(u => u.Profiles)
+            .WithOne(profile => profile.Rider)
+            .HasForeignKey(a => a.RiderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
-    public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null)
+    public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null, RaceStatus? statusToExclude = null,
+        bool? detailsCompleted = null,
+        bool? pointsRetrieved = null, bool? resultsRetrieved = null)
     {
-        var races = await Races.Where(r =>
-            r.Status == (status ?? r.Status)).ToListAsync();
+        var query = Races.Where(r => r.Status == (status ?? r.Status));
+        if (statusToExclude != null)
+        {
+            query = query.Where(r => r.Status != statusToExclude);
+        }
+
+        if (detailsCompleted != null)
+        {
+            query = query.Where(r => r.DetailsCompleted == detailsCompleted);
+        }
+
+        if (pointsRetrieved != null)
+        {
+            query = query.Where(r => r.PointsRetrieved == pointsRetrieved);
+        }
+
+        if (resultsRetrieved != null)
+        {
+            query = query.Where(r => r.ResultsRetrieved == resultsRetrieved);
+        }
+
+        var races = await query.ToListAsync();
         return races;
+    }
+
+    public async Task<ICollection<Models.Rider>> GetRidersAsync(bool? detailsCompleted = null,
+        string? monthToComplete = null)
+    {
+        var query = Riders
+            .Include(r => r.Profiles)
+            .Where(r => true);
+        if (detailsCompleted != null)
+        {
+            query = query.Where(r => r.DetailsCompleted == detailsCompleted);
+        }
+
+        if (monthToComplete != null)
+        {
+            query = query.Where(r => !r.Profiles.Any(p => p.Month == monthToComplete));
+        }
+
+        var riders = await query.ToListAsync();
+        return riders.Select((entity) => { return CreateRider(entity); }).ToList();
+    }
+
+    private static Models.Rider CreateRider(Rider entity)
+    {
+        var recentProfile = entity.Profiles?.FirstOrDefault(p => p.Month == DateTime.Now.ToString("yyMM"));
+        return new Models.Rider
+        {
+            Id = entity.Id, Name = entity.Name, Team = entity.Team,
+            Height = entity.Height, Ranking2019 = entity.Ranking2019,
+            Status = entity.Status, PcsId = entity.PcsId,
+            Ranking2020 = entity.Ranking2020, Ranking2021 = entity.Ranking2021,
+            Ranking2022 = entity.Ranking2022, Ranking2023 = entity.Ranking2023,
+            Ranking2024 = entity.Ranking2024, Ranking2025 = entity.Ranking2025,
+            Ranking2026 = entity.Ranking2026, DetailsCompleted = entity.DetailsCompleted,
+            BirthYear = entity.BirthYear, Weight = entity.Weight,
+            Sprinter = recentProfile?.Sprinter ?? -1, Climber = recentProfile?.Climber ?? -1,
+            Puncheur = recentProfile?.Puncheur ?? -1, GC = recentProfile?.GC ?? -1,
+            OneDay = recentProfile?.OneDay ?? -1, TimeTrialist = recentProfile?.TimeTrialist ?? -1,
+            UciRanking = recentProfile?.UciRanking ?? -1, PcsRanking = recentProfile?.PcsRanking ?? -1
+        };
+    }
+
+    public async Task<List<string>> GetRidersFromResultsAsync()
+    {
+        var query = await Results.Select(r => r.RiderId).Distinct().ToListAsync();
+        return query;
     }
 
     public async Task UpsertRaceResultsAsync(Models.RaceDetails raceDetails)
     {
         if (raceDetails.Results.Any())
         {
-            await UpsertRaceDataAsync(raceDetails, RaceStatus.Finished);
             foreach (var result in raceDetails.Results)
             {
                 var existingResult = await Results.FindAsync(result.Rider.Id, raceDetails.Id);
@@ -65,7 +140,44 @@ public class StatsDbContext : DbContext
                 {
                     existingResult.Gap = result.DelaySeconds;
                     existingResult.Position = result.Position;
-                    Results.Update(existingResult);
+                    //Results.Update(existingResult);
+                }
+            }
+
+            await UpsertRaceDataAsync(raceDetails, RaceStatus.Finished);
+
+            await SaveChangesAsync();
+        }
+    }
+
+    public async Task UpsertRacePointsAsync(Models.RaceDetails raceDetails)
+    {
+        if (raceDetails.Points.Any())
+        {
+            await UpsertRaceDataAsync(raceDetails, RaceStatus.Finished);
+            foreach (var racePoint in raceDetails.Points)
+            {
+                var existingPoint = await Points.FindAsync(racePoint.Rider.Id, raceDetails.Id);
+                if (existingPoint == null)
+                {
+                    await Points.AddAsync(new RacePoint()
+                    {
+                        RiderId = racePoint.Rider.Id, RaceId = raceDetails.Id,
+                        Points = racePoint.Points, Position = racePoint.Position,
+                        Stars = racePoint.Stars, Picked = racePoint.Picked, Mc = racePoint.Mc,
+                        Pc = racePoint.Pc, Gc = racePoint.Gc
+                    });
+                }
+                else
+                {
+                    existingPoint.Points = racePoint.Points;
+                    existingPoint.Position = racePoint.Position;
+                    existingPoint.Stars = racePoint.Stars;
+                    existingPoint.Picked = racePoint.Picked;
+                    existingPoint.Mc = racePoint.Mc;
+                    existingPoint.Pc = racePoint.Pc;
+                    existingPoint.Gc = racePoint.Gc;
+                    //Points.Update(existingPoint);
                 }
             }
 
@@ -79,12 +191,27 @@ public class StatsDbContext : DbContext
         if (existingRace != null)
         {
             existingRace.Status = newStatus;
-            Races.Update(existingRace);
+            //Races.Update(existingRace);
             await SaveChangesAsync();
         }
     }
 
-    public async Task UpsertRaceDataAsync(Models.RaceDetails raceData, RaceStatus newStatus)
+    public async Task MarkRaceAsErrorAsync(string raceId, string error)
+    {
+        if (string.IsNullOrEmpty(raceId))
+            return;
+        var existingRace = await Races.FindAsync(raceId);
+        if (existingRace != null)
+        {
+            existingRace.Status = RaceStatus.Error;
+            existingRace.Error = error;
+            existingRace.Updated = DateTime.Now;
+            //Races.Update(existingRace);
+            await SaveChangesAsync();
+        }
+    }
+
+    public async Task UpsertRaceDataAsync(Models.RaceDetails raceData, RaceStatus newStatus, string? error = null)
     {
         if (string.IsNullOrEmpty(raceData.Id))
             return;
@@ -98,21 +225,24 @@ public class StatsDbContext : DbContext
                     StartlistQuality = raceData.StartlistQuality, PcsId = raceData.PcsId,
                     RaceDate = raceData.Date, RaceType = raceData.RaceType, Status = newStatus,
                     Category = raceData.Category, IsStageRace = raceData.StageRace ?? false,
+                    ResultsRetrieved = raceData.ResultsRetrieved, StartListRetrieved = raceData.StartListRetrieved,
+                    DetailsCompleted = raceData.DetailsCompleted,
+                    PointsRetrieved = raceData.PointsRetrieved, GameOrganized = raceData.GameOrganized,
                     UciScale = raceData.UciScale, PointsScale = raceData.PointsScale, Elevation = raceData.Elevation,
                     DecidingMethod = raceData.DecidingMethod, Classification = raceData.Classification,
                     ProfileScore = raceData.ProfileScore, RaceRanking = raceData.RaceRanking,
-                    ProfileImageUrl = raceData.ProfileImageUrl,
+                    ProfileImageUrl = raceData.ProfileImageUrl, Error = error,
                     PcsUrl = raceData.PcsUrl, WcsUrl = raceData.WcsUrl,
-                    ParcoursType = raceData.ParcoursType, Updated = DateTime.Now,
+                    ParcoursType = raceData.ParcoursType, Updated = null,
                     Results = raceData.Results?.Select(r => new RaceResult
                     {
                         RiderId = r.Rider.Id, RaceId = raceData.Id, Gap = r.DelaySeconds, Position = r.Position
                     }).ToList()
                 };
-            if (!string.IsNullOrEmpty(raceData.StageId))
-            {
-                newRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
-            }
+            // if (!string.IsNullOrEmpty(raceData.StageId))
+            // {
+            //     newRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
+            // }
             await Races.AddAsync(newRace);
         }
         else
@@ -124,13 +254,19 @@ public class StatsDbContext : DbContext
             existingRace.Distance = raceData.Distance;
             existingRace.RaceDate = raceData.Date;
             existingRace.Category = raceData.Category;
+            existingRace.ResultsRetrieved = raceData.ResultsRetrieved;
+            existingRace.StartListRetrieved = raceData.StartListRetrieved;
+            existingRace.DetailsCompleted = raceData.DetailsCompleted;
             existingRace.IsStageRace = raceData.StageRace ?? false;
             existingRace.UciScale = raceData.UciScale;
             existingRace.PointsScale = raceData.PointsScale;
+            existingRace.Error = error;
             existingRace.Elevation = raceData.Elevation;
             existingRace.Updated = DateTime.Now;
             existingRace.PcsUrl = raceData.PcsUrl;
             existingRace.WcsUrl = raceData.WcsUrl;
+            existingRace.PointsRetrieved = raceData.PointsRetrieved;
+            existingRace.GameOrganized = raceData.GameOrganized;
             existingRace.DecidingMethod = raceData.DecidingMethod;
             existingRace.Classification = raceData.Classification;
             existingRace.ProfileScore = raceData.ProfileScore;
@@ -138,46 +274,98 @@ public class StatsDbContext : DbContext
             existingRace.ProfileImageUrl = raceData.ProfileImageUrl;
             existingRace.ParcoursType = raceData.ParcoursType;
             existingRace.StartlistQuality = raceData.StartlistQuality;
-            if(!string.IsNullOrEmpty(raceData.StageId))
-            {
-                existingRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
-            }
-            Races.Update(existingRace);
+            // if (!string.IsNullOrEmpty(raceData.StageId))
+            // {
+            //     existingRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
+            // }
+
+            //Races.Update(existingRace);
         }
 
         await SaveChangesAsync();
     }
 
-    public async Task UpsertRidersAsync(IEnumerable<Models.Rider> riders)
+    public async Task UpsertRiderProfilesAsync(IEnumerable<Models.Rider> riders)
     {
         foreach (var rider in riders)
         {
-            var existingRider = await Riders.FindAsync(rider.Id);
-            if (existingRider == null)
+            await UpsertRiderAsync(rider);
+            await UpsertRiderProfileAsync(rider);
+        }
+
+        await base.SaveChangesAsync();
+    }
+
+    private async Task UpsertRiderAsync(Models.Rider rider, RiderStatus? riderStatus = null)
+    {
+        var existingRider = await Riders.FindAsync(rider.Id);
+        if (existingRider == null)
+        {
+            var entity = new Rider
             {
-                await Riders.AddAsync(new Rider
+                Id = rider.Id, Name = rider.Name, Team = rider.Team,
+                PcsId = rider.PcsId,
+                Height = rider.Height, Ranking2019 = rider.Ranking2019,
+                Ranking2020 = rider.Ranking2020, Ranking2021 = rider.Ranking2021,
+                Ranking2022 = rider.Ranking2022, Ranking2023 = rider.Ranking2023,
+                Ranking2024 = rider.Ranking2024, Ranking2025 = rider.Ranking2025,
+                Ranking2026 = rider.Ranking2026, DetailsCompleted = true,
+                BirthYear = rider.BirthYear, Weight = rider.Weight,
+                Status = riderStatus ?? rider.Status ?? RiderStatus.New
+            };
+
+            await Riders.AddAsync(entity);
+        }
+        else
+        {
+            existingRider.Id = rider.Id;
+            existingRider.PcsId = rider.PcsId;
+            existingRider.Name = rider.Name;
+            existingRider.DetailsCompleted = rider.DetailsCompleted;
+            existingRider.Team = rider.Team;
+            existingRider.Height = rider.Height;
+            existingRider.Ranking2019 = rider.Ranking2019;
+            existingRider.Ranking2020 = rider.Ranking2020;
+            existingRider.Ranking2021 = rider.Ranking2021;
+            existingRider.Ranking2022 = rider.Ranking2022;
+            existingRider.Ranking2023 = rider.Ranking2023;
+            existingRider.Ranking2024 = rider.Ranking2024;
+            existingRider.Ranking2025 = rider.Ranking2025;
+            existingRider.Ranking2026 = rider.Ranking2026;
+            existingRider.BirthYear = rider.BirthYear;
+            existingRider.Weight = rider.Weight;
+            existingRider.Status =  riderStatus ?? rider.Status ?? existingRider.Status;
+        }
+    }
+
+    private async Task UpsertRiderProfileAsync(Models.Rider rider)
+    {
+        if (rider.ContainsProfile)
+        {
+            var month = DateTime.Now.ToString("yyMM");
+            var existingProfile = await RiderProfiles.FindAsync(rider.Id, month);
+            if (existingProfile == null)
+            {
+                await RiderProfiles.AddAsync(new RiderProfile
                 {
-                    Id = rider.Id, Name = rider.Name, Team = rider.Team,
+                    RiderId = rider.Id, Month = month,
                     Sprinter = rider.Sprinter, Climber = rider.Climber, Puncheur = rider.Puncheur,
-                    AllRounder = rider.AllRounder, OneDay = rider.OneDay, TimeTrialist = rider.TimeTrialist
+                    GC = rider.GC, OneDay = rider.OneDay, TimeTrialist = rider.TimeTrialist,
+                    UciRanking = rider.UciRanking, PcsRanking = rider.PcsRanking,
                 });
             }
             else
             {
-                existingRider.Id = rider.Id;
-                existingRider.Name = rider.Name;
-                existingRider.Team = rider.Team;
-                existingRider.Sprinter = rider.Sprinter;
-                existingRider.Climber = rider.Climber;
-                existingRider.Puncheur = rider.Puncheur;
-                existingRider.AllRounder = rider.AllRounder;
-                existingRider.OneDay = rider.OneDay;
-                existingRider.TimeTrialist = rider.TimeTrialist;
-                Riders.Update(existingRider);
+                existingProfile.Sprinter = rider.Sprinter;
+                existingProfile.Climber = rider.Climber;
+                existingProfile.Puncheur = rider.Puncheur;
+                existingProfile.GC = rider.GC;
+                existingProfile.OneDay = rider.OneDay;
+                existingProfile.TimeTrialist = rider.TimeTrialist;
+                existingProfile.UciRanking = rider.UciRanking;
+                existingProfile.PcsRanking = rider.PcsRanking;
             }
         }
-
-        await base.SaveChangesAsync();
     }
 
     public static StatsDbContext CreateFromConnectionString(string connectionString)

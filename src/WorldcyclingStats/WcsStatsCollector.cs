@@ -1,10 +1,7 @@
 using System.Globalization;
-using CyclingStats.Logic;
-using CyclingStats.Logic.Configuration;
-using CyclingStats.Logic.Interfaces;
+using CyclingStats.Logic.Extensions;
 using CyclingStats.Models;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Options;
 
 namespace WorldcyclingStats;
 

@@ -27,8 +27,13 @@ public class RaceDetails
     public string? PcsId { get; set; }
     public string? PcsUrl { get; set; }
     public string? WcsUrl { get; set; }
+    public bool PointsRetrieved { get; set; }
+    public bool? GameOrganized { get; set; }
+    public bool ResultsRetrieved { get; set; }
+    public bool StartListRetrieved { get; set; }
+    public bool DetailsCompleted { get; set; }
 
-    public static string GetRaceIdFromUrl(string url)
+    public static string GetRaceIdFromUrl(string url, int? year = null)
     {
         if (string.IsNullOrEmpty(url)) return "";
         var paths = url.Split("/");
@@ -39,25 +44,10 @@ public class RaceDetails
         
         if (!int.TryParse(paths.Last(), out _) && !paths.Last().StartsWith("stage", StringComparison.InvariantCultureIgnoreCase))
         {
-            paths = paths.Append(DateTime.UtcNow.Year.ToString()).ToArray();
+            paths = paths.Append((year ?? DateTime.Now.Year).ToString()).ToArray();
         }
         return string.Join('/', paths);
-        // if (url.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
-        // {
-        //     var paths = url.Split("/");
-        //     // Check if the url ends with a year
-        //     var suffix = url[^4..];
-        //     if (int.TryParse(suffix, out _))
-        //     {
-        //         url = paths.SkipLast(1).LastOrDefault() ?? "";
-        //     }
-        //     else
-        //     {
-        //         url = paths.LastOrDefault() ?? "";
-        //     }
-        // }
-        // // if(url.)
-        // var subPaths = url.Split("/");
-        // return subPaths.LastOrDefault() ?? "";
     }
+    
+    
 }

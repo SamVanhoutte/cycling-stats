@@ -2,11 +2,12 @@ using CyclingStats.DataAccess;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
+using CyclingStats.Workers.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;
 
-public class RaceIdMatchWorker : BaseWorker
+public class RaceIdMatchWorker : BaseWorker<BatchConfig>
 {
     private readonly ILogger<RaceIdMatchWorker> logger;
     private readonly IDataRetriever resultCollector;
@@ -24,7 +25,7 @@ public class RaceIdMatchWorker : BaseWorker
     protected override string TaskDescription => "Tries to get the PCS id for races that are not found";
     protected override string WorkerName => nameof(RaceIdMatchWorker);
     protected override ILogger Logger => logger;
-    protected override async Task ProcessAsync(CancellationToken stoppingToken)
+    protected override async Task<bool> ProcessAsync(CancellationToken stoppingToken, BatchConfig config)
     {
         try
         {
@@ -38,10 +39,11 @@ public class RaceIdMatchWorker : BaseWorker
 
                     try
                     {
-                        var pcsId = await resultCollector.GetPcsIdAsync(race);
+                        var pcsId = await resultCollector.GetPcsRaceIdAsync(race);
                         if (string.IsNullOrEmpty(pcsId))
                         {
                             race.Status = RaceStatus.Error;
+                            race.Error = "PCS Id Not Found";
                             Console.WriteLine($"No PCS id found for race {race.Id}");
                         }
                         else
@@ -67,5 +69,7 @@ public class RaceIdMatchWorker : BaseWorker
             Console.WriteLine(e);
             logger.LogError(e, "Error while scraping race results: {Exception}", e.Message);
         }
+
+        return true;
     }
 }

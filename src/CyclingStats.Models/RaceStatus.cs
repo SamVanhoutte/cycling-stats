@@ -8,5 +8,7 @@ public enum RaceStatus
     Finished = 3,
     Canceled = 4,
     Error = -1,
-    NotFound = -4
+    NotFound = -4,
+    NoResultsAvailable = -2,
+    WaitingForDetails = 5
 }

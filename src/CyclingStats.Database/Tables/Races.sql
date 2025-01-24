@@ -23,5 +23,11 @@ CREATE TABLE [dbo].[Races]
   [Category] NVARCHAR(128) NULL,
   [PcsUrl] NVARCHAR(255) NULL,
   [WcsUrl] NVARCHAR(255) NULL,
+  [PointsRetrieved] BIT NOT NULL default( 0),
+  [ResultsRetrieved] BIT NOT NULL default( 0),
+  [StartListRetrieved] BIT NOT NULL default( 0),
+  [DetailsCompleted] BIT NOT NULL default( 0),
+  [GameOrganized] BIT NULL,
+  [Error] NVARCHAR(MAX) NULL,
   [Updated] DATETIME2 NULL
 )
