@@ -5,6 +5,7 @@
 
 .DS_Store
 data/.python-version
+.python-version
 
 **/azuresettings.env
 **/appsettings.json
@@ -355,3 +356,4 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+src/CyclingStats.Workers/.python-version
