@@ -1,6 +1,4 @@
-﻿using CyclingStats.DataAccess.Entities;
-using CyclingStats.Logic.Exceptions;
-using CyclingStats.Models;
+﻿using CyclingStats.Models;
 
 namespace CyclingStats.DataCollectionTests;
 
@@ -67,6 +65,20 @@ public class DataCollectionTests
         Assert.Single(raceData);
         Assert.True(raceData.Single().DetailsAvailable);
         Assert.True(raceData.Single().Distance > 20);
+        Assert.Equal(2024, raceData.Single().Date.Value.Year);
+        Assert.False(raceData.Single().StageRace);
+    }
+    
+    
+    [Fact]
+    public async Task TestRetrieveOneDayRaceDateAsync()
+    {
+        var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var raceData = await retriever.GetRaceDataAsync(GetRace("omloop-het-nieuwsblad/2024"));
+        Assert.Single(raceData);
+        Assert.True(raceData.Single().DetailsAvailable);
+        Assert.True(raceData.Single().Distance > 20);
+        Assert.Equal(2024, raceData.Single().Date.Value.Year);
         Assert.False(raceData.Single().StageRace);
     }
 
@@ -85,9 +97,21 @@ public class DataCollectionTests
     public async Task TestGetStageRaceDataAsync()
     {
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
-        var results = await retriever.GetRaceDataAsync(GetRace("4-jours-de-dunkerque/2025"));
+        var data = await retriever.GetRaceDataAsync(GetRace("4-jours-de-dunkerque/2025"));
 
-        Assert.NotNull(results);
+        Assert.NotNull(data);
+    }
+    
+    [Fact]
+    public async Task TestGetPastStageRaceDataAsync()
+    {
+        var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var data = await retriever.GetRaceDataAsync(GetRace("4-jours-de-dunkerque/2023"));
+
+        Assert.NotNull(data);
+        Assert.NotEmpty(data);
+        Assert.NotEmpty(data.First().Name);
+        Assert.Equal(2023, data.First().Date.Value.Year);
     }
 
     [Fact]
@@ -99,34 +123,42 @@ public class DataCollectionTests
         Assert.NotNull(races);
         Assert.NotEmpty(races);
         Assert.NotNull(races.Single().Classification);
+        Assert.Equal(2025, races.Single().Date.Value.Year);
     }
 
     [Fact]
     public async Task TestFutureStageRaceDataAsync()
     {
+        var stageRaceId = "4-jours-de-dunkerque/2025";
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
-        var races = await retriever.GetRaceDataAsync(GetRace("4-jours-de-dunkerque/2025"));
+        var races = await retriever.GetRaceDataAsync(GetRace(stageRaceId));
 
         Assert.NotNull(races);
         Assert.NotEmpty(races);
         Assert.Equal(5, races.Count);
         Assert.False(races.First().Id.StartsWith("stage", StringComparison.InvariantCultureIgnoreCase));
+        Assert.Equal("stage-1", races.First().StageId);
+        Assert.Equal(stageRaceId, races.First().StageRaceId);
     }
-
-
-
+    
     [Fact]
-    public async Task TestRaceIdDataAsync()
+    public async Task TestStageRaceNameDataAsync()
     {
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var race = GetRace("4-jours-de-dunkerque/2024/stage-2", true);
+        race.Name = Guid.NewGuid().ToString();
+        var races = await retriever.GetRaceDataAsync(race);
 
-        var pcsId = await retriever.GetPcsRaceIdAsync(new Race { Id = "alpes-isere-tour", Name = "Alpes Isère Tour" });
-
-        Assert.NotNull(pcsId);
-        Assert.NotEmpty(pcsId);
-        Assert.Equal("rhone-alpes-isere-tour/2025", pcsId);
-        Assert.False(pcsId.StartsWith("race", StringComparison.InvariantCultureIgnoreCase));
+        Assert.NotNull(races);
+        Assert.NotEmpty(races);
+        Assert.Equal(race.Name, races.Single()!.Name);
+        Assert.Equal("stage-2", races.Single()!.StageId);
+        Assert.Equal("4-jours-de-dunkerque/2024", races.Single()!.StageRaceId);
     }
+
+
+
+    
     
     [Fact]
     public async Task TestRiderIdDataAsync()
@@ -147,7 +179,16 @@ public class DataCollectionTests
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
         var results = await retriever.GetRaceResultsAsync(GetRace( "omloop-het-nieuwsblad/2024"));
 
-        Assert.NotEmpty(results);
+        Assert.NotEmpty(results.Item2);
+    }
+    
+    [Fact]
+    public async Task TestGetStageRaceResultsAsync()
+    {
+        var retriever = await TestClientFactory.GetDataRetrieverAsync();
+        var results = await retriever.GetRaceResultsAsync(GetRace( "tour-down-under/2025/stage-5", true));
+
+        Assert.NotEmpty(results.Item2);
     }
 
     [Fact]
@@ -188,54 +229,16 @@ public class DataCollectionTests
     }
     
     [Fact]
-    public async Task TestGetFutureStageDayRacePointsAsync()
+    public async Task TestStartgridAsync()
     {
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
-        var task =  retriever.GetRacePointsAsync(GetRace("tour-down-under/2025/stage-4", true));
-        var results = await Assert.ThrowsAsync<NoResultsAvailableException>(async () => await task);
+        var results = await retriever.GetStartListAsync("etoile-de-besseges/2025");
+        Assert.NotNull(results);
+    }
+    
+    private RaceDetails GetRace(string id, bool stageRace = false)
+    {
+        return new RaceDetails { Id = id, PcsId = id , RaceType = stageRace ? "Multi-day race": "One-day race"};
     }
 
-    private Race GetRace(string id, bool stageRace = false)
-    {
-        return new Race { Id = id, PcsId = id , IsStageRace = stageRace};
-    }
-    // [Fact]
-    // public async Task TestRetrieveOneDayRaceDetailsAsync()
-    // {
-    //     var retriever = await TestClientFactory.GetDataRetrieverAsync();
-    //     var raceData = await retriever.GetRaceDataAsync("omloop-het-nieuwsblad", 2024);
-    //
-    //     Assert.True(raceData.DetailsAvailable);
-    //     Assert.True(raceData.Distance > 20);
-    //     Assert.NotEmpty(raceData.ProfileImageUrl);
-    //     Assert.True(raceData.ProfileScore > 0);
-    //     Assert.NotEmpty(raceData.UciScale);
-    //     Assert.Equal(2, raceData.ParcoursType);
-    //     Assert.True(raceData.RaceRanking > 0);
-    //     Assert.False(raceData.ProfileImageUrl.Contains("logo"));
-    //     Assert.True(raceData.ProfileImageUrl.Contains("profiles"));
-    //     Assert.False(raceData.StageRace);
-    // }
-    //
-    // [Fact]
-    // public async Task TestRetrieveStageRaceDetailsAsync()
-    // {
-    //     var retriever = await TestClientFactory.GetDataRetrieverAsync();
-    //     var raceData = await retriever.GetRaceDataAsync("tour-down-under", 2025, "stage-1");
-    //
-    //     Assert.True(raceData.DetailsAvailable);
-    //     Assert.True(raceData.Distance > 20);
-    //     Assert.NotEmpty(raceData.ProfileImageUrl);
-    //     Assert.False(raceData.ProfileImageUrl.Contains("logo"));
-    //     Assert.True(raceData.ProfileImageUrl.Contains("profiles"));
-    //     Assert.True(raceData.StageRace);
-    // }
-    //
-    // [Fact]
-    // public async Task TestGetRaceResultsAsync()
-    // {
-    //     var retriever = await TestClientFactory.GetDataRetrieverAsync();
-    //     var results = await retriever.GetRaceResultsAsync("tour-down-under" , 2024, "stage-1");
-    //
-    // }
 }

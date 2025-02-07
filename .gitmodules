@@ -1,0 +1,3 @@
+[submodule "aerozure"]
+	path = aerozure
+	url = https://github.com/SamVanhoutte/aerozure.git

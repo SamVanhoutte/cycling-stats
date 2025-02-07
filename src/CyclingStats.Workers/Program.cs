@@ -16,6 +16,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.Configure<ScheduleOptions>(options =>
             hostContext.Configuration.GetSection("schedule").Bind(options));
         services.AddSingleton<IDataRetriever, StatsCollector>();
+        services.AddSingleton<IRaceService, RaceService>();
         services.AddHostedService<RaceResultWorker>();
         services.AddHostedService<RaceStartListWorker>();
         services.AddHostedService<RaceDataWorker>();

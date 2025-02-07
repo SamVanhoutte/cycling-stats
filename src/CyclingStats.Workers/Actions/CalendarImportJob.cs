@@ -40,7 +40,7 @@ public class CalendarImportJob : BaseWorker<BatchConfig>
                     try
                     {
                         logger.LogInformation("Inserting data for race {RaceId}", race.Id);
-                        await ctx.UpsertRaceDataAsync(race, RaceStatus.New);
+                        await ctx.UpsertRaceDetailsAsync(race, RaceStatus.New);
                     }
                     catch (Exception e)
                     {

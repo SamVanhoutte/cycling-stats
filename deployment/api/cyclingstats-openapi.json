@@ -1,0 +1,406 @@
+{
+  "x-generator": "NSwag v14.0.3.0 (NJsonSchema v11.0.0.0 (Newtonsoft.Json v13.0.0.0))",
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CyclingStats API",
+    "version": "1.0.0.0"
+  },
+  "paths": {
+    "/races": {
+      "get": {
+        "tags": [
+          "Race"
+        ],
+        "operationId": "Race_GetRaces",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve races.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Race list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RaceListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Race"
+        ],
+        "operationId": "Race_UpdateRace",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaceUpdateRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to update race.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Race updated."
+          }
+        }
+      }
+    },
+    "/races/{raceId}": {
+      "get": {
+        "tags": [
+          "Race"
+        ],
+        "operationId": "Race_GetRace",
+        "parameters": [
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve race.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Race.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Race"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/races/pcs/{query}/{year}": {
+      "get": {
+        "tags": [
+          "Race"
+        ],
+        "operationId": "Race_QueryPcsRaceId",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve races.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Available races.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RaceQueryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProblemDetails": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RaceListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "races": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Race"
+            }
+          }
+        }
+      },
+      "Race": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "raceType": {
+            "type": "string",
+            "nullable": true
+          },
+          "distance": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/RaceStatus"
+          },
+          "profileImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "pointsScale": {
+            "type": "string",
+            "nullable": true
+          },
+          "uciScale": {
+            "type": "string",
+            "nullable": true
+          },
+          "parcoursType": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "profileScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "raceRanking": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "elevation": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startlistQuality": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "decidingMethod": {
+            "type": "string",
+            "nullable": true
+          },
+          "classification": {
+            "type": "string",
+            "nullable": true
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "stageRace": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "detailsAvailable": {
+            "type": "boolean"
+          },
+          "pcsId": {
+            "type": "string",
+            "nullable": true
+          },
+          "pcsUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "wcsUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "pointsRetrieved": {
+            "type": "boolean"
+          },
+          "gameOrganized": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "resultsRetrieved": {
+            "type": "boolean"
+          },
+          "startListRetrieved": {
+            "type": "boolean"
+          },
+          "detailsCompleted": {
+            "type": "boolean"
+          },
+          "stageRaceId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RaceStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "New",
+          "Planned",
+          "Finished",
+          "Canceled",
+          "NotFound",
+          "Error"
+        ],
+        "enum": [
+          0,
+          1,
+          3,
+          4,
+          -4,
+          -1
+        ]
+      },
+      "RaceQueryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "results": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RaceUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "raceId": {
+            "type": "string"
+          },
+          "pcsId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RaceStatus"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

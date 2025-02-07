@@ -33,13 +33,13 @@ public class RaceStartListWorker : BaseWorker<BatchConfig>
             using (var ctx = StatsDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
-                var races = await ctx.GetAllRacesAsync(RaceStatus.WaitingForStartList);
+                var races = await ctx.GetAllRacesAsync(RaceStatus.Planned);
                 foreach (var race in races)
                 {
                     try
                     {
                         logger.LogInformation("Updating status for race {RaceId}", race.Id);
-                        await ctx.UpdateRaceStatusAsync(race.Id, RaceStatus.WaitingForResults);
+                        await ctx.UpdateRaceStatusAsync(race.Id, RaceStatus.Planned);
                     }
                     catch (Exception e)
                     {

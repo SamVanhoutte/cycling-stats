@@ -7,7 +7,7 @@ public class BatchConfig : IWorkerConfig
 {
     public void LoadSettings(ScheduledTaskSetting settings)
     {
-        HoursAge = settings.Settings.GetIntSetting("ageHours", 1);
+        AgeMinutes = settings.Settings.GetIntSetting("ageMinutes", 1);
         BatchSize = settings.Settings.GetIntSetting("batchSize", 0);
         TopResults = settings.Settings.GetIntSetting("topResults", 50);
 
@@ -33,6 +33,6 @@ public class BatchConfig : IWorkerConfig
 
     public int BatchSize { get; set; }
 
-    public int HoursAge { get; set; }
+    public int AgeMinutes { get; set; }
 }
 

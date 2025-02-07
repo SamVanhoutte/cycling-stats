@@ -1,31 +1,20 @@
-using CyclingStats.DataAccess;
-using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Exceptions;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
-using CyclingStats.Models.Extensions;
 using CyclingStats.Workers.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Workers.Workers;
 
-public class RaceResultWorker : BaseWorker<BatchConfig>
+public class RaceResultWorker(
+    ILogger<RaceResultWorker> logger,
+    IRaceService raceService,
+    IDataRetriever resultCollector,
+    IOptions<ScheduleOptions> scheduleOptions,
+    IOptions<SqlOptions> sqlSettings)
+    : BaseWorker<BatchConfig>(scheduleOptions, sqlSettings)
 {
-    private readonly ILogger<RaceResultWorker> logger;
-    private readonly IDataRetriever resultCollector;
-
-    public RaceResultWorker(
-        ILogger<RaceResultWorker> logger,
-        IDataRetriever resultCollector,
-        IOptions<ScheduleOptions> scheduleOptions,
-        IOptions<SqlOptions> sqlSettings) : base(scheduleOptions, sqlSettings)
-    {
-        this.logger = logger;
-        this.resultCollector = resultCollector;
-    }
-
-
     protected override string TaskDescription => "Collecting race results.";
     protected override string WorkerName => "RaceResults";
     protected override ILogger Logger => logger;
@@ -34,65 +23,71 @@ public class RaceResultWorker : BaseWorker<BatchConfig>
     {
         try
         {
-            ICollection<Race> races;
-            await using (var ctx = StatsDbContext.CreateFromConnectionString(
-                             sqlSettings.ConnectionString))
+            ICollection<RaceDetails> races;
+            races = await raceService.GetRacesAsync(detailsCompleted: true, resultsRetrieved: false);
+            // Only take past races and races with a category
+            races = races.Where(r => r.IsFinished).ToList();
+            races = races.Where(r => r.Updated < DateTime.Now.AddMinutes(-config.AgeMinutes)).ToList();
+            if (config.RaceScales != null)
             {
-                races = await ctx.GetAllRacesAsync(detailsCompleted: true, resultsRetrieved: false);
-                // Only take past races and races with a category
-                races = races.Where(r => r.RaceDate < DateTime.Now && !string.IsNullOrEmpty(r.UciScale)).ToList();
-                races = races.Where(r => r.Updated < DateTime.Now.AddMinutes(-3)).ToList();
-                if (config.RaceScales!=null)
-                {
-                    races = races.Where(r => config.RaceScales.Contains(r.UciScale.ToLower())).ToList();
-                }
+                races = races.Where(r => config.RaceScales.Contains(r.UciScale.ToLower())).ToList();
+            }
 
 
-                if (config.BatchSize > 0)
-                {
-                    races = races.Take(config.BatchSize).ToList();
-                }
+            if (config.BatchSize > 0)
+            {
+                races = races.Take(config.BatchSize).ToList();
+            }
 
-                if (races.Any())
+            if (races.Any())
+            {
+                foreach (var race in races)
                 {
-                    foreach (var race in races)
+                    try
                     {
-                        try
+                        var raceData = await resultCollector.GetRaceDataAsync(race);
+                        foreach (var raceDetail in raceData)
                         {
-                            var raceData = await resultCollector.GetRaceDataAsync(race);
-                            foreach (var raceDetail in raceData)
+                            try
                             {
-                                try
+                                var output = await resultCollector.GetRaceResultsAsync(race, top: config.TopResults);
+                                if (raceDetail != null)
                                 {
-                                    raceDetail.Results = await resultCollector.GetRaceResultsAsync(race, top: config.TopResults);
+                                    raceDetail.Duration = output.Item1;
+                                    raceDetail.Results = output.Item2;
                                     if (raceDetail.Results.Any())
                                     {
                                         raceDetail.ResultsRetrieved = true;
-                                        await ctx.UpsertRaceResultsAsync(raceDetail);
+                                        await raceService.UpsertRaceResultsAsync(raceDetail);
                                         logger.LogInformation(
                                             "Saved {ResultCount} results of {RaceName} to the data store",
                                             raceDetail.Results.Count(), raceDetail.Id);
                                     }
                                 }
-                                catch (NoResultsAvailableException e)
+                                else
                                 {
-                                    await ctx.UpsertRaceDataAsync(raceDetail, RaceStatus.NoResultsAvailable);
+                                    Console.WriteLine("RaceDetail not found");
+                                    await raceService.UpsertRaceDetailsAsync(race, RaceStatus.NotFound);
                                 }
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e);
-                            logger.LogError(e, "Error while scraping race results of {Race}: {Exception}", race.Id,
-                                e.Message);
-                            await ctx.MarkRaceAsErrorAsync(race.Id, e.ToString());
+                            catch (NoResultsAvailableException e)
+                            {
+                                await raceService.UpsertRaceDetailsAsync(raceDetail, RaceStatus.Finished);
+                            }
                         }
                     }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        logger.LogError(e, "Error while scraping race results of {Race}: {Exception}", race.Id,
+                            e.Message);
+                        await raceService.MarkRaceAsErrorAsync(race.Id, e.ToString());
+                    }
                 }
-                else
-                {
-                    return false;
-                }
+            }
+            else
+            {
+                return false;
             }
         }
         catch (Exception e)

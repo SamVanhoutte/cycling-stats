@@ -23,11 +23,11 @@ public static class ParseExtensionMethods
 
     public static decimal? ParsePercentage(this string? text)
     {
-        return text?.Replace("%", "").ParseDecimal();
+        return text?.Replace("%", "").ParseDecimalValue();
     }
 
 
-    public static decimal? ParseDecimal(this string? text)
+    public static decimal? ParseDecimalValue(this string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
         if (!decimal.TryParse(text, NumberStyles.Any, new NumberFormatInfo { NumberDecimalSeparator = "." },
@@ -39,22 +39,23 @@ public static class ParseExtensionMethods
         return result;
     }
 
-    public static bool IsNumeric(this string text)
+    public static bool IsNumericValue(this string text)
     {
         return int.TryParse(text, out _);
     }
 
-    public static int? GetYearFromRaceId(this string? raceId)
+    public static int? GetYearValueFromRaceId(this string? raceId)
     {
         int? year = null;
         if (string.IsNullOrWhiteSpace(raceId)) return year;
-        var yearValue = raceId.Split('/').LastOrDefault(segment => segment.IsNumeric());
+        var yearValue = raceId.Split('/').LastOrDefault(segment => segment.IsNumericValue());
         if (string.IsNullOrWhiteSpace(yearValue)) return year;
         return int.Parse(yearValue);
     }
 
     public static DateTime? ParseDateFromText(this string? dateText, int? year = null)
     {
+        year ??= DateTime.Now.Year;
         if (string.IsNullOrWhiteSpace(dateText)) return null;
         if (dateText.Contains('(') && dateText.Contains(')'))
         {
@@ -71,7 +72,7 @@ public static class ParseExtensionMethods
         if (dateText.Count(c => c == '/') == 1)
         {
             // The format will be day / month, so we add the year
-            return new DateTime(DateTime.Now.Year, int.Parse(dateText.Split('/')[1]),
+            return new DateTime(year!.Value, int.Parse(dateText.Split('/')[1]),
                 int.Parse(dateText.Split('/')[0]));
         }
 
@@ -95,6 +96,8 @@ public static class ParseExtensionMethods
         var seconds = int.Parse((timeDelay.Split("'")[1]).Replace("'", ""));
         return hours * 3600 + minutes * 60 + seconds;
     }
+    
+    
 
     public static int GetIntSetting(this IDictionary<string, string>? settings, string key, int defaultValue)
     {
@@ -130,7 +133,17 @@ public static class ParseExtensionMethods
     {
         // The format is : Date of birth: 21st September 1998 (26)
         var parts = text.Split(separator);
-        var numericPart = parts.FirstOrDefault(p => p.ParseDecimal() != null);
-        return string.IsNullOrEmpty(numericPart) ? -1 : numericPart.ParseDecimal();
+        var numericPart = parts.FirstOrDefault(p => p.ParseDecimalValue() != null);
+        return string.IsNullOrEmpty(numericPart) ? -1 : numericPart.ParseDecimalValue();
+    }
+    
+    public static string? ToApiNotation(this string? id)
+    {
+        return id?.Replace("/", "---");
+    }
+    
+    public static string? FromApiNotation(this string? apiNotation)
+    {
+        return apiNotation?.Replace("---", "/");
     }
 }

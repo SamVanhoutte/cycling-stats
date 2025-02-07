@@ -4,9 +4,9 @@ CREATE TABLE [dbo].[RacePoints]
   [RiderId] NVARCHAR(255) NOT NULL,
   [Points] INT NOT NULL,
   [Position] INT NOT NULL,
-  [Gc] INT NOT NULL,
-  [Pc] INT NOT NULL,
-  [Mc] INT NOT NULL,
+  [Gc] INT NULL,
+  [Pc] INT NULL,
+  [Mc] INT NULL,
   [Picked] DECIMAL NOT NULL,
   [Stars] INT NOT NULL,
   PRIMARY KEY (RaceId, RiderId)

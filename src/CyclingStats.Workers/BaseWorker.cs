@@ -41,7 +41,7 @@ public abstract class BaseWorker<T> : BackgroundService where T: IWorkerConfig, 
 
                 if (!keepSpinning)
                 {
-                    Logger?.LogInformation("{workerName} indicated to stop the loop.", WorkerName);
+                    Logger?.LogInformation("{FinishTime} {workerName} indicated to stop the loop.", DateTime.Now.ToString("t"), WorkerName);
                     return;
                 }
             }

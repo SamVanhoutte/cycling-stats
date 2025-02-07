@@ -1,9 +1,12 @@
+using CyclingStats.Models.Extensions;
+
 namespace CyclingStats.Models;
 
 public class RaceDetails
 {
     public string Id { get; set; }
     public string? StageId { get; set; }
+    public string? StageRaceId { get; set; }
     public string? Name { get; set; }
     public DateTime? Date { get; set; }
     public string? RaceType { get; set; }
@@ -15,6 +18,7 @@ public class RaceDetails
     public int? ParcoursType { get; set; }
     public int? ProfileScore { get; set; }
     public int? RaceRanking { get; set; }
+    public int? Duration { get; set; }
     public int? Elevation { get; set; }
     public int? StartlistQuality { get; set; }
     public string? DecidingMethod { get; set; }
@@ -32,6 +36,29 @@ public class RaceDetails
     public bool ResultsRetrieved { get; set; }
     public bool StartListRetrieved { get; set; }
     public bool DetailsCompleted { get; set; }
+    public bool IsFinished => !(DecidingMethod?.StartsWith('?')??false) && Date < DateTime.Now;
+    public bool IsTeamTimeTrial => PointsScale?.Contains("TTT", StringComparison.CurrentCultureIgnoreCase) ?? false;
+    public DateTime? Updated { get; set; }
+    public string? PcsRaceId
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(PcsId)) return Id;
+            var idYear = Id.GetYearValueFromRaceId();
+            var pcsYear = PcsId.GetYearValueFromRaceId();
+            if (idYear != null)
+            {
+                return pcsYear==null
+                    ? PcsId + "/" + idYear 
+                    : PcsId.Replace(pcsYear.ToString(), idYear.ToString());
+            }
+            return PcsId;
+        }
+        
+        
+    }
+
+
 
     public static string GetRaceIdFromUrl(string url, int? year = null)
     {

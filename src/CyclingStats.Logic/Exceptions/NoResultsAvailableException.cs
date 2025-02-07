@@ -4,3 +4,8 @@ public class NoResultsAvailableException : Exception
 {
     
 }
+
+public class NoPointsAvailableException : Exception
+{
+    
+}

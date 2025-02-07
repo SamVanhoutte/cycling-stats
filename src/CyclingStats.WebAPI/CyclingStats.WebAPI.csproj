@@ -5,10 +5,16 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>987c9869-c16e-4e5f-8957-7e3874a1c5cc</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
+        <PackageReference Include="NSwag.AspNetCore" Version="14.0.3" />
+        <PackageReference Include="NSwag.MSBuild" Version="14.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
@@ -17,4 +23,12 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\aerozure\src\Aerozure\Aerozure.csproj" />
+      <ProjectReference Include="..\CyclingStats.Logic\CyclingStats.Logic.csproj" />
+      <ProjectReference Include="..\CyclingStats.Models\CyclingStats.Models.csproj" />
+    </ItemGroup>
+    <Target Name="NSwag" AfterTargets="PostBuildEvent" Condition=" '$(Docker)' != 'yes' ">
+        <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;IS_NSWAG_BUILD=true;API_TITLE=CyclingStats API;INCLUDE_ALL_OPERATIONS=true" Command="$(NSwagExe_Net80) run nswag-client.json /variables:Configuration=$(Configuration),Output=cyclingstats-openapi.json" />
+    </Target>
 </Project>

@@ -1,11 +1,10 @@
-using System.ComponentModel.Design.Serialization;
 using CyclingStats.DataAccess.Entities;
 using CyclingStats.Models;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Rider = CyclingStats.DataAccess.Entities.Rider;
 
 namespace CyclingStats.DataAccess;
+
 
 public class StatsDbContext : DbContext
 {
@@ -14,7 +13,6 @@ public class StatsDbContext : DbContext
     }
 
     public DbSet<Rider> Riders { get; set; }
-
     public DbSet<Race> Races { get; set; }
 
     // public DbSet<StageRace> StageRaces { get; set; }
@@ -144,7 +142,7 @@ public class StatsDbContext : DbContext
                 }
             }
 
-            await UpsertRaceDataAsync(raceDetails, RaceStatus.Finished);
+            await UpsertRaceDetailsAsync(raceDetails, RaceStatus.Finished);
 
             await SaveChangesAsync();
         }
@@ -154,7 +152,7 @@ public class StatsDbContext : DbContext
     {
         if (raceDetails.Points.Any())
         {
-            await UpsertRaceDataAsync(raceDetails, RaceStatus.Finished);
+            await UpsertRaceDetailsAsync(raceDetails, RaceStatus.Finished);
             foreach (var racePoint in raceDetails.Points)
             {
                 var existingPoint = await Points.FindAsync(racePoint.Rider.Id, raceDetails.Id);
@@ -164,8 +162,8 @@ public class StatsDbContext : DbContext
                     {
                         RiderId = racePoint.Rider.Id, RaceId = raceDetails.Id,
                         Points = racePoint.Points, Position = racePoint.Position,
-                        Stars = racePoint.Stars, Picked = racePoint.Picked, Mc = racePoint.Mc,
-                        Pc = racePoint.Pc, Gc = racePoint.Gc
+                        Stars = racePoint.Stars, Picked = racePoint.Picked, Mc = racePoint.Mc ?? -1,
+                        Pc = racePoint.Pc ?? -1, Gc = racePoint.Gc ?? -1
                     });
                 }
                 else
@@ -174,9 +172,9 @@ public class StatsDbContext : DbContext
                     existingPoint.Position = racePoint.Position;
                     existingPoint.Stars = racePoint.Stars;
                     existingPoint.Picked = racePoint.Picked;
-                    existingPoint.Mc = racePoint.Mc;
-                    existingPoint.Pc = racePoint.Pc;
-                    existingPoint.Gc = racePoint.Gc;
+                    existingPoint.Mc = racePoint.Mc ?? -1;
+                    existingPoint.Pc = racePoint.Pc ?? -1;
+                    existingPoint.Gc = racePoint.Gc ?? -1;
                     //Points.Update(existingPoint);
                 }
             }
@@ -211,8 +209,9 @@ public class StatsDbContext : DbContext
         }
     }
 
-    public async Task UpsertRaceDataAsync(Models.RaceDetails raceData, RaceStatus newStatus, string? error = null)
+    public async Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null) //, string? error = null)
     {
+        string error = null;
         if (string.IsNullOrEmpty(raceData.Id))
             return;
         var existingRace = await Races.FindAsync(raceData.Id);
@@ -223,7 +222,7 @@ public class StatsDbContext : DbContext
                 {
                     Id = raceData.Id, Name = raceData.Name, Distance = raceData.Distance,
                     StartlistQuality = raceData.StartlistQuality, PcsId = raceData.PcsId,
-                    RaceDate = raceData.Date, RaceType = raceData.RaceType, Status = newStatus,
+                    RaceDate = raceData.Date, RaceType = raceData.RaceType, 
                     Category = raceData.Category, IsStageRace = raceData.StageRace ?? false,
                     ResultsRetrieved = raceData.ResultsRetrieved, StartListRetrieved = raceData.StartListRetrieved,
                     DetailsCompleted = raceData.DetailsCompleted,
@@ -232,24 +231,23 @@ public class StatsDbContext : DbContext
                     DecidingMethod = raceData.DecidingMethod, Classification = raceData.Classification,
                     ProfileScore = raceData.ProfileScore, RaceRanking = raceData.RaceRanking,
                     ProfileImageUrl = raceData.ProfileImageUrl, Error = error,
-                    PcsUrl = raceData.PcsUrl, WcsUrl = raceData.WcsUrl,
+                    PcsUrl = raceData.PcsUrl, WcsUrl = raceData.WcsUrl, Duration = raceData.Duration,
+                    StageId = raceData.StageId, StageRaceId = raceData.StageRaceId,
                     ParcoursType = raceData.ParcoursType, Updated = null,
                     Results = raceData.Results?.Select(r => new RaceResult
                     {
                         RiderId = r.Rider.Id, RaceId = raceData.Id, Gap = r.DelaySeconds, Position = r.Position
                     }).ToList()
                 };
-            // if (!string.IsNullOrEmpty(raceData.StageId))
-            // {
-            //     newRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
-            // }
+            if (newStatus != null) newRace.Status = newStatus.Value;
             await Races.AddAsync(newRace);
         }
         else
         {
             existingRace.PcsId = raceData.PcsId;
+            existingRace.StageId = raceData.StageId;
+            existingRace.StageRaceId = raceData.StageRaceId;
             existingRace.Name = raceData.Name;
-            existingRace.Status = newStatus;
             existingRace.RaceType = raceData.RaceType;
             existingRace.Distance = raceData.Distance;
             existingRace.RaceDate = raceData.Date;
@@ -259,6 +257,7 @@ public class StatsDbContext : DbContext
             existingRace.DetailsCompleted = raceData.DetailsCompleted;
             existingRace.IsStageRace = raceData.StageRace ?? false;
             existingRace.UciScale = raceData.UciScale;
+            existingRace.Duration = raceData.Duration;
             existingRace.PointsScale = raceData.PointsScale;
             existingRace.Error = error;
             existingRace.Elevation = raceData.Elevation;
@@ -274,12 +273,8 @@ public class StatsDbContext : DbContext
             existingRace.ProfileImageUrl = raceData.ProfileImageUrl;
             existingRace.ParcoursType = raceData.ParcoursType;
             existingRace.StartlistQuality = raceData.StartlistQuality;
-            // if (!string.IsNullOrEmpty(raceData.StageId))
-            // {
-            //     existingRace.StageRace = new StageRace { StageRaceId = raceData.StageId! };
-            // }
+            if (newStatus != null) existingRace.Status = newStatus.Value;
 
-            //Races.Update(existingRace);
         }
 
         await SaveChangesAsync();
