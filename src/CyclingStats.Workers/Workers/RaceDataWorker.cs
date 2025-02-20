@@ -23,20 +23,28 @@ public class RaceDataWorker(
         try
         {
             // Get incompleted races
-            var races = await raceService.GetRacesAsync(detailsCompleted: false,
+            var races = await raceService.GetRacesAsync(
                 statusToExclude: RaceStatus.NotFound);
-            // Filter out races that are further than 1 month in the future
-            races = races.Where(r => r.Date == null || r.Date < DateTime.Now.AddMonths(1)).ToList();
-            races = races.Where(r => r.Status != RaceStatus.Error && r.Status != RaceStatus.Canceled).ToList();
-            races = races.Where(r => (r.Updated == null || r.Updated?.AddMinutes(config.AgeMinutes) < DateTime.Now))
-                .ToList();
+            if(!races.Any(r=>r.MarkForProcess))
+            {
+                // Filter out races that are further than 1 month in the future
+                races = races.Where(r => r.Date == null || r.Date < DateTime.Now.AddMonths(1)).ToList();
+                races = races.Where(r => r.Status != RaceStatus.Error && r.Status != RaceStatus.Canceled).ToList();
+                races = races.Where(r => (r.Updated == null || r.Updated?.AddMinutes(config.AgeMinutes) < DateTime.Now)).ToList();
+                races = races.Where(r => r.DetailsCompleted==false || r.Duration == null).ToList();
+            }
+            else
+            {
+                races = races.Where(r => r.MarkForProcess).ToList();
+            }
             if (races.Any())
             {
+                Console.WriteLine($"(Data) Found {races.Count} races to update");
                 races = races.OrderBy(r => r.Updated).ToList();
                 var race = races.First();
                 try
                 {
-                    logger.LogInformation("Updating data for race {RaceId} - {Date}", race.Id, race.Date);
+                    logger.LogInformation("(Data) Updating data for race {RaceId} - {Date}", race.Id, race.Date);
 
                     var raceData = await resultCollector.GetRaceDataAsync(race);
                     
@@ -49,7 +57,7 @@ public class RaceDataWorker(
                             if (!string.IsNullOrEmpty(pcsId))
                             {
                                 Console.ForegroundColor = ConsoleColor.Green;
-                                Console.WriteLine($"PCS status looked up as {pcsId}");
+                                Console.WriteLine($"(Data) PCS status looked up as {pcsId}");
                                 Console.ResetColor();
                                 logger.LogInformation($"PCS status looked up as {pcsId}");
                                 race.Status = RaceStatus.New;
@@ -63,13 +71,13 @@ public class RaceDataWorker(
                         else
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"The race {race.PcsRaceId} was not found");
+                            Console.WriteLine($"(Data) The race {race.PcsRaceId} was not found");
                             Console.ResetColor();
                             logger.LogWarning($"The race {race.PcsRaceId} was not found");
                             race.Status = RaceStatus.NotFound;
                         }
 
-                        await raceService.UpsertRaceDetailsAsync(race);
+                        await raceService.UpsertRaceDetailsAsync(race, false);
                     }
                     else
                     {
@@ -77,7 +85,8 @@ public class RaceDataWorker(
                         {
                             race.Status = race.IsFinished ? RaceStatus.Finished : RaceStatus.Planned;
                             race.DetailsCompleted = true;
-                            await raceService.UpsertRaceDetailsAsync(race);
+                            race.MarkForProcess = false;
+                            await raceService.UpsertRaceDetailsAsync(race, false);
                         }
 
                         foreach (var raceDetail in raceData)
@@ -85,8 +94,9 @@ public class RaceDataWorker(
                             // Mark these as new to be imported for the next iteration
                             // raceDetail.Id = race.Id;
                             // raceDetail.PcsId = race.PcsId;
-                            raceDetail.DetailsCompleted = !string.IsNullOrEmpty(raceDetail.ProfileImageUrl);
-                            await raceService.UpsertRaceDetailsAsync(raceDetail,race.IsFinished ? RaceStatus.Finished : RaceStatus.Planned);
+                            raceDetail.DetailsCompleted = true;
+                            raceDetail.MarkForProcess = false;
+                            await raceService.UpsertRaceDetailsAsync(raceDetail, string.IsNullOrEmpty(raceDetail.UciScale), race.IsFinished ? RaceStatus.Finished : RaceStatus.Planned);
                         }
                     }
 
@@ -94,13 +104,13 @@ public class RaceDataWorker(
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Console.WriteLine($"(Data) {e}");
                     logger.LogError(e, "Error while scraping race data of {Race}: {Exception}", race.Id, e.Message);
                 }
             }
             else
             {
-                Console.WriteLine("No new races found to update");
+                Console.WriteLine("(Data) No new races found to update");
                 return false;
             }
         }

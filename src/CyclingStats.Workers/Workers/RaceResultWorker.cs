@@ -24,15 +24,23 @@ public class RaceResultWorker(
         try
         {
             ICollection<RaceDetails> races;
-            races = await raceService.GetRacesAsync(detailsCompleted: true, resultsRetrieved: false);
-            // Only take past races and races with a category
-            races = races.Where(r => r.IsFinished).ToList();
-            races = races.Where(r => r.Updated < DateTime.Now.AddMinutes(-config.AgeMinutes)).ToList();
-            if (config.RaceScales != null)
+            races = await raceService.GetRacesAsync();
+            if (!races.Any(r => r.MarkForProcess))
             {
-                races = races.Where(r => config.RaceScales.Contains(r.UciScale.ToLower())).ToList();
+                // Only take past races and races with a category
+                races = races.Where(r => r.DetailsCompleted & !r.ResultsRetrieved).ToList();
+                races = races.Where(r => r.IsFinished).ToList();
+                races = races.Where(r => r.Updated < DateTime.Now.AddMinutes(-config.AgeMinutes)).ToList();
+                if (config.RaceScales != null)
+                {
+                    races = races.Where(r => config.RaceScales.Contains(r.UciScale?.ToLower() ?? string.Empty))
+                        .ToList();
+                }
             }
-
+            else
+            {
+                races = races.Where(r => r.MarkForProcess).ToList();
+            }
 
             if (config.BatchSize > 0)
             {
@@ -58,6 +66,7 @@ public class RaceResultWorker(
                                     if (raceDetail.Results.Any())
                                     {
                                         raceDetail.ResultsRetrieved = true;
+                                        raceDetail.DetailsCompleted = true;
                                         await raceService.UpsertRaceResultsAsync(raceDetail);
                                         logger.LogInformation(
                                             "Saved {ResultCount} results of {RaceName} to the data store",
@@ -66,19 +75,19 @@ public class RaceResultWorker(
                                 }
                                 else
                                 {
-                                    Console.WriteLine("RaceDetail not found");
-                                    await raceService.UpsertRaceDetailsAsync(race, RaceStatus.NotFound);
+                                    Console.WriteLine("(Results) RaceDetail not found");
+                                    await raceService.UpsertRaceDetailsAsync(race, false, RaceStatus.NotFound);
                                 }
                             }
                             catch (NoResultsAvailableException e)
                             {
-                                await raceService.UpsertRaceDetailsAsync(raceDetail, RaceStatus.Finished);
+                                await raceService.UpsertRaceDetailsAsync(raceDetail, false, RaceStatus.Finished);
                             }
                         }
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        Console.WriteLine($"(Results) {e}");
                         logger.LogError(e, "Error while scraping race results of {Race}: {Exception}", race.Id,
                             e.Message);
                         await raceService.MarkRaceAsErrorAsync(race.Id, e.ToString());
@@ -92,7 +101,7 @@ public class RaceResultWorker(
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Console.WriteLine($"(Results) {e}");
             logger.LogError(e, "Error while scraping race results: {Exception}", e.Message);
         }
 

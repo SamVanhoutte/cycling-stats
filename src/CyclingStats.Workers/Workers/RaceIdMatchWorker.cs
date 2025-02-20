@@ -38,7 +38,7 @@ public class RaceIdMatchWorker(
                         {
                             Console.WriteLine($"PCS id found for race {race.Id}: {pcsId}");;
                             race.PcsId = pcsId;
-                            await raceService.UpsertRaceDetailsAsync(race, RaceStatus.New);
+                            await raceService.UpsertRaceDetailsAsync(race, false, RaceStatus.New);
                         }
                     }
                     catch (Exception e)

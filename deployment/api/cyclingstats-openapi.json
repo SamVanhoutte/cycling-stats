@@ -122,6 +122,47 @@
         }
       }
     },
+    "/races/{raceId}/startlist": {
+      "get": {
+        "tags": [
+          "Race"
+        ],
+        "operationId": "Race_GetRaceStartList",
+        "parameters": [
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve race.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Race.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/races/pcs/{query}/{year}": {
       "get": {
         "tags": [
@@ -166,6 +207,47 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RaceQueryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/race/predict/{raceId}/duration": {
+      "get": {
+        "tags": [
+          "RacePrediction"
+        ],
+        "operationId": "RacePrediction_GetDuration",
+        "parameters": [
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to predict race.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Race list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RaceDurationPredictionResponse"
                 }
               }
             }
@@ -246,6 +328,16 @@
             "format": "decimal",
             "nullable": true
           },
+          "elevation": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "status": {
             "$ref": "#/components/schemas/RaceStatus"
           },
@@ -276,11 +368,6 @@
             "format": "int32",
             "nullable": true
           },
-          "elevation": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "startlistQuality": {
             "type": "integer",
             "format": "int32",
@@ -306,6 +393,9 @@
           "stageRace": {
             "type": "boolean",
             "nullable": true
+          },
+          "mainRaceId": {
+            "type": "string"
           },
           "detailsAvailable": {
             "type": "boolean"
@@ -341,6 +431,13 @@
           "stageRaceId": {
             "type": "string",
             "nullable": true
+          },
+          "stages": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/Race"
+            }
           }
         }
       },
@@ -363,6 +460,54 @@
           -4,
           -1
         ]
+      },
+      "StartListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "starBudget": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "riders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RiderRaceInfo"
+            }
+          }
+        }
+      },
+      "RiderRaceInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rider": {
+            "$ref": "#/components/schemas/RiderSummary"
+          },
+          "stars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "youthRider": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RiderSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          }
+        }
       },
       "RaceQueryResponse": {
         "type": "object",
@@ -398,6 +543,47 @@
                 "$ref": "#/components/schemas/RaceStatus"
               }
             ]
+          }
+        }
+      },
+      "RaceDurationPredictionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalDuration": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "predictions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RaceDurationResult"
+            }
+          }
+        }
+      },
+      "RaceDurationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "raceId": {
+            "type": "string"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "distance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageSpeedKh": {
+            "type": "number",
+            "format": "decimal"
           }
         }
       }

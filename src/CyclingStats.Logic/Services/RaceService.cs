@@ -3,6 +3,7 @@ using CyclingStats.DataAccess.Entities;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace CyclingStats.Logic.Services;
@@ -37,6 +38,17 @@ public class RaceService(IOptions<SqlOptions> sqlOptions) : IRaceService
         {
             var raceEntity = await ctx.Races.FindAsync(raceId);
             return raceEntity == null? null : CreateRaceDetails(raceEntity);
+        }
+    }
+    
+    public async Task<List<RaceDetails>> GetStageRaceStagesAsync(string raceId)
+    {
+        using (var ctx = StatsDbContext.CreateFromConnectionString(
+                   sqlSettings.ConnectionString))
+        {
+            var raceEntities = await ctx.Races.Where(r =>
+                r.StageRaceId!=null && r.StageRaceId.Equals(raceId)).ToListAsync();
+            return raceEntities.Select(CreateRaceDetails).ToList();
         }
     }
 
@@ -76,12 +88,12 @@ public class RaceService(IOptions<SqlOptions> sqlOptions) : IRaceService
         }
     }
 
-    public async Task UpsertRaceDetailsAsync(RaceDetails raceData, RaceStatus? newStatus = null)
+    public async Task UpsertRaceDetailsAsync(RaceDetails raceData, bool stageRaceBatch, RaceStatus? newStatus = null)
     {
         using (var ctx = StatsDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
-            await ctx.UpsertRaceDetailsAsync(raceData, newStatus);
+            await ctx.UpsertRaceDetailsAsync(raceData, newStatus, stageRaceBatch);
         }
     }
 
@@ -91,11 +103,14 @@ public class RaceService(IOptions<SqlOptions> sqlOptions) : IRaceService
         {
             Id = entity.Id,
             Name = entity.Name,
+            IsStageRace = entity.IsStageRace,
             Date = entity.RaceDate,
             RaceType = entity.RaceType,
             Distance = entity.Distance,
             Duration = entity.Duration,
             Status = entity.Status,
+            StageRaceId = entity.StageRaceId,
+            StageId = entity.StageId,
             ProfileImageUrl = entity.ProfileImageUrl,
             PointsScale = entity.PointsScale,
             UciScale = entity.UciScale,
@@ -112,6 +127,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions) : IRaceService
             PointsRetrieved = entity.PointsRetrieved,
             Updated = entity.Updated,
             GameOrganized = entity.GameOrganized, DetailsCompleted = entity.DetailsCompleted,
+            MarkForProcess = entity.MarkForProcess ?? false,
             ResultsRetrieved = entity.ResultsRetrieved,
             StartlistQuality = entity.StartlistQuality, StartListRetrieved = entity.StartListRetrieved,
         };

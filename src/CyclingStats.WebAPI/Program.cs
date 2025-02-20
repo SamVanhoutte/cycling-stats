@@ -1,9 +1,12 @@
 using System.Reflection;
 using Aerozure;
+using Aerozure.Configuration;
 using Aerozure.Runtime;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
+using CyclingStats.Logic.Prediction;
 using CyclingStats.Logic.Services;
+using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using NSwag.Generation.AspNetCore;
@@ -41,6 +44,18 @@ public class Program
         {
         }
 
+
+        // Configure globally:
+        FlurlHttp.Clients.WithDefaults(builder =>
+            builder.BeforeCall(call =>
+            {
+                if (call.RequestBody != null)
+                {
+                    var requestBody = call.RequestBody.ToString();
+                    Console.WriteLine("Request Payload: " + requestBody);
+                }
+            })
+        );
         cfgBuilder.AddJsonFile($"appsettings.json", true, true)
             .AddJsonFile($"appsettings.dev.json", true, true)
             .AddEnvironmentVariables()
@@ -58,9 +73,10 @@ public class Program
                 configuration.GetSection("wcs").Bind(options))
             .Configure<PcsOptions>(options =>
                 configuration.GetSection("pcs").Bind(options))
+            .Configure<AzuremlOptions>(options => configuration.GetSection("azureml").Bind(options))
             .AddSingleton<IDataRetriever, StatsCollector>()
+            .AddSingleton<IRaceDurationPredictor, AzuremlDurationPredictor>()
             .AddSingleton<IRaceService, RaceService>()
-
             ;
         var app = builder.Build();
         app.UseOpenApi();
@@ -156,4 +172,5 @@ public class Program
         // }
 
     }
+    
 }

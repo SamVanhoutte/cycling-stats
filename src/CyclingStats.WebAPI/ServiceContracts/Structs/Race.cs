@@ -22,9 +22,10 @@ public class Race
     public int? StartlistQuality { get; set; }
     public string? DecidingMethod { get; set; }
     public string? Classification { get; set; }
-    public int? Year => Id.GetYearValueFromRaceId();
+    public int? Year { get; set; }
     public string? Category { get; set; }
     public bool? StageRace { get; set; }
+    public string MainRaceId => StageRaceId ?? Id;
     public bool DetailsAvailable => Name != null && Date != DateTime.MinValue && Distance != 0;
     public string? PcsId { get; set; }
     public string? PcsUrl { get; set; }
@@ -36,12 +37,15 @@ public class Race
     public bool DetailsCompleted { get; set; }
     public string? StageRaceId { get; set; }
 
+    public Race[]? Stages { get; set; }
+    
     public static Race FromDomain(RaceDetails raceDetails)
     {
         return new Race
         {
             Id = raceDetails.Id.ToApiNotation()!,
             StageRaceId = raceDetails.StageRaceId.ToApiNotation(),
+            Year = raceDetails.Id.GetYearValueFromRaceId(),
             Name = raceDetails.Name,
             Date = raceDetails.Date,
             RaceType = raceDetails.RaceType,
@@ -69,5 +73,14 @@ public class Race
             StageRace = raceDetails.StageRace
         };
     }
-
+    
+    public static Race FromDomain(RaceDetails mainRace, RaceDetails[] stages)
+    {
+        var race = Race.FromDomain(mainRace);
+        race.Stages = stages.Select(FromDomain).ToArray();
+        race.Distance = stages.Sum(s => s.Distance);
+        race.Duration = stages.Sum(s => s.Duration);
+        race.Elevation = stages.Sum(s => s.Elevation);
+        return race;
+    }
 }

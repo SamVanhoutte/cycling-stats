@@ -26,7 +26,8 @@ public class RaceDetails
     public string? Category { get; set; }
     public List<RacerRaceResult>? Results { get; set; }
     public List<RacerRacePoint>? Points { get; set; }
-    public bool? StageRace => RaceType?.Contains("Multi-day race");
+    public bool StageRace =>  IsStageRace || (RaceType?.Contains("Multi-day race") ?? false);
+    public bool IsStageRace { get; set; }
     public bool DetailsAvailable => Name != null && Date != DateTime.MinValue && Distance != 0;
     public string? PcsId { get; set; }
     public string? PcsUrl { get; set; }
@@ -36,6 +37,7 @@ public class RaceDetails
     public bool ResultsRetrieved { get; set; }
     public bool StartListRetrieved { get; set; }
     public bool DetailsCompleted { get; set; }
+    public bool MarkForProcess { get; set; }
     public bool IsFinished => !(DecidingMethod?.StartsWith('?')??false) && Date < DateTime.Now;
     public bool IsTeamTimeTrial => PointsScale?.Contains("TTT", StringComparison.CurrentCultureIgnoreCase) ?? false;
     public DateTime? Updated { get; set; }

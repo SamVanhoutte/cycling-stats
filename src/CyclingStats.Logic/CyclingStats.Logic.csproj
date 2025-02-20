@@ -7,12 +7,18 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Flurl.Http" Version="4.0.2" />
       <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\aerozure\src\Aerozure\Aerozure.csproj" />
       <ProjectReference Include="..\CyclingStats.DataAccess\CyclingStats.DataAccess.csproj" />
       <ProjectReference Include="..\CyclingStats.Models\CyclingStats.Models.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Prediction\Azureml\" />
     </ItemGroup>
 
 </Project>

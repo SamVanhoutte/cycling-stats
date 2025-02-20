@@ -70,13 +70,13 @@ public class RacePointsWorker(
                         {
                             raceDetail.PointsRetrieved = true;
                             raceDetail.GameOrganized = false;
-                            await raceService.UpsertRaceDetailsAsync(raceDetail);
+                            await raceService.UpsertRaceDetailsAsync(raceDetail, false);
                         }
                         catch (GameNotEnabledException e)
                         {
                             raceDetail.PointsRetrieved = true;
                             raceDetail.GameOrganized = false;
-                            await raceService.UpsertRaceDetailsAsync(raceDetail);
+                            await raceService.UpsertRaceDetailsAsync(raceDetail, false);
                         }
                     }
                 }

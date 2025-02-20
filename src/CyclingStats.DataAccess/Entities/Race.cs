@@ -33,6 +33,7 @@ public class Race
     public bool ResultsRetrieved { get; set; }
     public bool StartListRetrieved { get; set; }
     public bool DetailsCompleted { get; set; }
+    public bool? MarkForProcess { get; set; }
     public ICollection<RaceResult>? Results { get; set; }
     public string? StageRaceId { get; set; }
     public string? StageId { get; set; }
