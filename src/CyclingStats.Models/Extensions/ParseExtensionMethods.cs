@@ -85,19 +85,30 @@ public static class ParseExtensionMethods
         timeDelay = timeDelay.Replace("+", "");
         timeDelay = timeDelay.Replace(" ", "");
         timeDelay = timeDelay.TrimStart().TrimEnd();
-        int hours = 0;
-        if (timeDelay.Contains('h', StringComparison.InvariantCultureIgnoreCase))
-        {
-            hours = int.Parse(timeDelay.Split("h")[0]);
-            timeDelay = timeDelay.Split("h")[1];
-        }
 
-        var minutes = int.Parse(timeDelay.Split("'")[0]);
-        var seconds = int.Parse((timeDelay.Split("'")[1]).Replace("'", ""));
-        return hours * 3600 + minutes * 60 + seconds;
+        if (timeDelay.Contains("."))
+        {
+            timeDelay = timeDelay.Replace(".", "'") + "''";
+        }
+        if (TimeSpan.TryParse(timeDelay, out var timeSpan))
+        {
+            return (int)timeSpan.TotalSeconds;
+        }
+        else
+        {
+            int hours = 0;
+            if (timeDelay.Contains('h', StringComparison.InvariantCultureIgnoreCase))
+            {
+                hours = int.Parse(timeDelay.Split("h")[0]);
+                timeDelay = timeDelay.Split("h")[1];
+            }
+
+            var minutes = int.Parse(timeDelay.Split("'")[0]);
+            var seconds = int.Parse((timeDelay.Split("'")[1]).Replace("'", ""));
+            return hours * 3600 + minutes * 60 + seconds;
+        }
     }
-    
-    
+
 
     public static int GetIntSetting(this IDictionary<string, string>? settings, string key, int defaultValue)
     {
@@ -136,12 +147,12 @@ public static class ParseExtensionMethods
         var numericPart = parts.FirstOrDefault(p => p.ParseDecimalValue() != null);
         return string.IsNullOrEmpty(numericPart) ? -1 : numericPart.ParseDecimalValue();
     }
-    
+
     public static string? ToApiNotation(this string? id)
     {
         return id?.Replace("/", "---");
     }
-    
+
     public static string? FromApiNotation(this string? apiNotation)
     {
         return apiNotation?.Replace("---", "/");

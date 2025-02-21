@@ -5,7 +5,6 @@ using Rider = CyclingStats.DataAccess.Entities.Rider;
 
 namespace CyclingStats.DataAccess;
 
-
 public class StatsDbContext : DbContext
 {
     public StatsDbContext(DbContextOptions<StatsDbContext> options) : base(options)
@@ -19,10 +18,12 @@ public class StatsDbContext : DbContext
     public DbSet<RaceResult> Results { get; set; }
     public DbSet<RacePoint> Points { get; set; }
     public DbSet<RiderProfile> RiderProfiles { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rider>().ToTable("Riders");
+        modelBuilder.Entity<User>().ToTable("Users", "aerobets");
         modelBuilder.Entity<RiderProfile>().ToTable("RiderProfiles");
         modelBuilder.Entity<Race>().ToTable("Races");
         modelBuilder.Entity<RaceResult>().ToTable("RaceResults");
@@ -45,13 +46,18 @@ public class StatsDbContext : DbContext
     }
 
     public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null, RaceStatus? statusToExclude = null,
-        bool? detailsCompleted = null,
+        bool? detailsCompleted = null, bool? markedForProcessing = null,
         bool? pointsRetrieved = null, bool? resultsRetrieved = null)
     {
         var query = Races.Where(r => r.Status == (status ?? r.Status));
         if (statusToExclude != null)
         {
             query = query.Where(r => r.Status != statusToExclude);
+        }
+
+        if (markedForProcessing != null)
+        {
+            query = query.Where(r => r.MarkForProcess == markedForProcessing);
         }
 
         if (detailsCompleted != null)
@@ -71,6 +77,12 @@ public class StatsDbContext : DbContext
 
         var races = await query.ToListAsync();
         return races;
+    }
+    
+    public async Task<ICollection<User>> GetAllUsersAsync()
+    {
+        var users = await Users.ToListAsync();
+        return users;
     }
 
     public async Task<ICollection<Models.Rider>> GetRidersAsync(bool? detailsCompleted = null,
@@ -209,7 +221,8 @@ public class StatsDbContext : DbContext
         }
     }
 
-    public async Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null) //, string? error = null)
+    public async Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null,
+        bool stageRaceBatch = false) //, string? error = null)
     {
         string error = null;
         if (string.IsNullOrEmpty(raceData.Id))
@@ -220,16 +233,18 @@ public class StatsDbContext : DbContext
             var newRace =
                 new Race
                 {
-                    Id = raceData.Id, Name = raceData.Name, Distance = raceData.Distance,
+                    Id = raceData.Id, Name = raceData.Name,
+                    Distance = raceData.Distance,
                     StartlistQuality = raceData.StartlistQuality, PcsId = raceData.PcsId,
-                    RaceDate = raceData.Date, RaceType = raceData.RaceType, 
-                    Category = raceData.Category, IsStageRace = raceData.StageRace ?? false,
+                    RaceDate = raceData.Date, RaceType = raceData.RaceType,
+                    Category = raceData.Category, IsStageRace = raceData.StageRace,
                     ResultsRetrieved = raceData.ResultsRetrieved, StartListRetrieved = raceData.StartListRetrieved,
                     DetailsCompleted = raceData.DetailsCompleted,
                     PointsRetrieved = raceData.PointsRetrieved, GameOrganized = raceData.GameOrganized,
                     UciScale = raceData.UciScale, PointsScale = raceData.PointsScale, Elevation = raceData.Elevation,
                     DecidingMethod = raceData.DecidingMethod, Classification = raceData.Classification,
                     ProfileScore = raceData.ProfileScore, RaceRanking = raceData.RaceRanking,
+                    MarkForProcess = raceData.MarkForProcess,
                     ProfileImageUrl = raceData.ProfileImageUrl, Error = error,
                     PcsUrl = raceData.PcsUrl, WcsUrl = raceData.WcsUrl, Duration = raceData.Duration,
                     StageId = raceData.StageId, StageRaceId = raceData.StageRaceId,
@@ -244,37 +259,40 @@ public class StatsDbContext : DbContext
         }
         else
         {
-            existingRace.PcsId = raceData.PcsId;
-            existingRace.StageId = raceData.StageId;
-            existingRace.StageRaceId = raceData.StageRaceId;
-            existingRace.Name = raceData.Name;
-            existingRace.RaceType = raceData.RaceType;
-            existingRace.Distance = raceData.Distance;
-            existingRace.RaceDate = raceData.Date;
-            existingRace.Category = raceData.Category;
-            existingRace.ResultsRetrieved = raceData.ResultsRetrieved;
-            existingRace.StartListRetrieved = raceData.StartListRetrieved;
-            existingRace.DetailsCompleted = raceData.DetailsCompleted;
-            existingRace.IsStageRace = raceData.StageRace ?? false;
-            existingRace.UciScale = raceData.UciScale;
-            existingRace.Duration = raceData.Duration;
-            existingRace.PointsScale = raceData.PointsScale;
-            existingRace.Error = error;
-            existingRace.Elevation = raceData.Elevation;
+            if (!stageRaceBatch)
+            {
+                existingRace.PcsId = raceData.PcsId;
+                existingRace.StageId = raceData.StageId;
+                existingRace.StageRaceId = raceData.StageRaceId;
+                existingRace.Name = raceData.Name;
+                existingRace.RaceType = raceData.RaceType ?? existingRace.RaceType;
+                existingRace.Distance = raceData.Distance ?? existingRace.Distance;
+                existingRace.RaceDate = raceData.Date ?? existingRace.RaceDate;
+                existingRace.Category = raceData.Category ?? existingRace.Category;
+                existingRace.ResultsRetrieved = raceData.ResultsRetrieved;
+                existingRace.StartListRetrieved = raceData.StartListRetrieved;
+                existingRace.DetailsCompleted = raceData.DetailsCompleted;
+                existingRace.PointsRetrieved = raceData.PointsRetrieved;
+                existingRace.GameOrganized = raceData.GameOrganized;
+                existingRace.IsStageRace = raceData.StageRace;
+                existingRace.UciScale = raceData.UciScale ?? existingRace.UciScale;
+                existingRace.Duration = raceData.Duration ?? existingRace.Duration;
+                existingRace.PointsScale = raceData.PointsScale ?? existingRace.PointsScale;
+                existingRace.Error = error;
+                existingRace.Elevation = raceData.Elevation ?? existingRace.Elevation;
+                existingRace.PcsUrl = raceData.PcsUrl ?? existingRace.PcsUrl;
+                existingRace.WcsUrl = raceData.WcsUrl ?? existingRace.WcsUrl;
+                existingRace.MarkForProcess = raceData.MarkForProcess;
+                existingRace.DecidingMethod = raceData.DecidingMethod ?? existingRace.DecidingMethod;
+                existingRace.Classification = raceData.Classification ?? existingRace.Classification;
+                existingRace.ProfileScore = raceData.ProfileScore ?? existingRace.ProfileScore;
+                existingRace.RaceRanking = raceData.RaceRanking ?? existingRace.RaceRanking;
+                existingRace.ProfileImageUrl = raceData.ProfileImageUrl ?? existingRace.ProfileImageUrl;
+                existingRace.ParcoursType = raceData.ParcoursType ?? existingRace.ParcoursType;
+                existingRace.StartlistQuality = raceData.StartlistQuality ?? existingRace.StartlistQuality;
+            }
             existingRace.Updated = DateTime.Now;
-            existingRace.PcsUrl = raceData.PcsUrl;
-            existingRace.WcsUrl = raceData.WcsUrl;
-            existingRace.PointsRetrieved = raceData.PointsRetrieved;
-            existingRace.GameOrganized = raceData.GameOrganized;
-            existingRace.DecidingMethod = raceData.DecidingMethod;
-            existingRace.Classification = raceData.Classification;
-            existingRace.ProfileScore = raceData.ProfileScore;
-            existingRace.RaceRanking = raceData.RaceRanking;
-            existingRace.ProfileImageUrl = raceData.ProfileImageUrl;
-            existingRace.ParcoursType = raceData.ParcoursType;
-            existingRace.StartlistQuality = raceData.StartlistQuality;
             if (newStatus != null) existingRace.Status = newStatus.Value;
-
         }
 
         await SaveChangesAsync();
@@ -329,7 +347,7 @@ public class StatsDbContext : DbContext
             existingRider.Ranking2026 = rider.Ranking2026;
             existingRider.BirthYear = rider.BirthYear;
             existingRider.Weight = rider.Weight;
-            existingRider.Status =  riderStatus ?? rider.Status ?? existingRider.Status;
+            existingRider.Status = riderStatus ?? rider.Status ?? existingRider.Status;
         }
     }
 
@@ -368,4 +386,10 @@ public class StatsDbContext : DbContext
         var options = new DbContextOptionsBuilder<StatsDbContext>().UseSqlServer(connectionString).Options;
         return new StatsDbContext(options);
     }
+
+    private const string durationQuery = @"
+                                        select month(racedate) as month, year(racedate) as year, distance, elevation, PointsScale, UciScale, ParcoursType, ProfileScore, RaceRanking, StartlistQuality, Classification, Category, Duration
+                                        from races 
+                                        where duration > 600 and distance > 10 and (StageRace=0 OR StageId is not null)
+                                        ";
 }

@@ -3,7 +3,7 @@ CREATE TABLE [dbo].[Races]
   [Id] NVARCHAR(255) NOT NULL PRIMARY KEY,
   [PcsId] NVARCHAR(255) NULL,
   [StageId] NVARCHAR(64) NULL,
-  [StageRaceId] NVARCHAR(64) NULL,
+  [StageRaceId] NVARCHAR(255) NULL,
   [StageRace] BIT NOT NULL,
   [Name] NVARCHAR(MAX) NULL,
   [RaceDate] DATETIME NULL,
@@ -30,5 +30,6 @@ CREATE TABLE [dbo].[Races]
   [DetailsCompleted] BIT NOT NULL default( 0),
   [GameOrganized] BIT NULL,
   [Error] NVARCHAR(MAX) NULL,
+  [MarkForProcess] BIT NULL,
   [Updated] DATETIME2 NULL
 )

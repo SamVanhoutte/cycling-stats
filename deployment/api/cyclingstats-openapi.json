@@ -6,27 +6,15 @@
     "version": "1.0.0.0"
   },
   "paths": {
-    "/races": {
+    "/users": {
       "get": {
         "tags": [
-          "Race"
+          "Users"
         ],
-        "operationId": "Race_GetRaces",
-        "parameters": [
-          {
-            "name": "year",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "nullable": true
-            },
-            "x-position": 1
-          }
-        ],
+        "operationId": "Users_GetUsers",
         "responses": {
           "401": {
-            "description": "Not authorized to retrieve races.",
+            "description": "Not authorized to retrieve users.",
             "content": {
               "application/json": {
                 "schema": {
@@ -36,11 +24,11 @@
             }
           },
           "200": {
-            "description": "Race list.",
+            "description": "User list.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RaceListResponse"
+                  "$ref": "#/components/schemas/UserListResponse"
                 }
               }
             }
@@ -49,15 +37,15 @@
       },
       "post": {
         "tags": [
-          "Race"
+          "Users"
         ],
-        "operationId": "Race_UpdateRace",
+        "operationId": "Users_CreateUser",
         "requestBody": {
           "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RaceUpdateRequest"
+                "$ref": "#/components/schemas/CreateUserRequest"
               }
             }
           },
@@ -66,7 +54,7 @@
         },
         "responses": {
           "401": {
-            "description": "Not authorized to update race.",
+            "description": "Not authorized to create a user.",
             "content": {
               "application/json": {
                 "schema": {
@@ -76,20 +64,27 @@
             }
           },
           "200": {
-            "description": "Race updated."
+            "description": "User created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/races/{raceId}": {
+    "/users/{userId}": {
       "get": {
         "tags": [
-          "Race"
+          "Users"
         ],
-        "operationId": "Race_GetRace",
+        "operationId": "Users_GetUser",
         "parameters": [
           {
-            "name": "raceId",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
@@ -100,7 +95,7 @@
         ],
         "responses": {
           "401": {
-            "description": "Not authorized to retrieve race.",
+            "description": "Not authorized to retrieve user.",
             "content": {
               "application/json": {
                 "schema": {
@@ -110,11 +105,62 @@
             }
           },
           "200": {
-            "description": "Race.",
+            "description": "User details.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Race"
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_UpdateUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to update a user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "User updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -122,36 +168,38 @@
         }
       }
     },
-    "/races/pcs/{query}/{year}": {
-      "get": {
+    "/users/{userId}/password/wcs": {
+      "put": {
         "tags": [
-          "Race"
+          "Users"
         ],
-        "operationId": "Race_QueryPcsRaceId",
+        "operationId": "Users_SetWcsPassword",
         "parameters": [
           {
-            "name": "query",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
             },
             "x-position": 1
-          },
-          {
-            "name": "year",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 2
           }
         ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePasswordRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
         "responses": {
           "401": {
-            "description": "Not authorized to retrieve races.",
+            "description": "Not authorized to set the password of a user.",
             "content": {
               "application/json": {
                 "schema": {
@@ -161,14 +209,7 @@
             }
           },
           "200": {
-            "description": "Available races.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RaceQueryResponse"
-                }
-              }
-            }
+            "description": "Password updated."
           }
         }
       }
@@ -205,7 +246,7 @@
           }
         }
       },
-      "RaceListResponse": {
+      "UserListResponse": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -213,191 +254,101 @@
             "type": "integer",
             "format": "int64"
           },
-          "races": {
+          "users": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Race"
+              "$ref": "#/components/schemas/User"
             }
           }
         }
       },
-      "Race": {
+      "User": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "id": {
+          "userId": {
             "type": "string"
           },
-          "name": {
+          "email": {
+            "type": "string"
+          },
+          "phoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "date": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "raceType": {
+          "wcsUserName": {
             "type": "string",
             "nullable": true
           },
-          "distance": {
-            "type": "number",
-            "format": "decimal",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/RaceStatus"
-          },
-          "profileImageUrl": {
+          "language": {
             "type": "string",
             "nullable": true
           },
-          "pointsScale": {
-            "type": "string",
-            "nullable": true
-          },
-          "uciScale": {
-            "type": "string",
-            "nullable": true
-          },
-          "parcoursType": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "profileScore": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "raceRanking": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "elevation": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "startlistQuality": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "decidingMethod": {
-            "type": "string",
-            "nullable": true
-          },
-          "classification": {
-            "type": "string",
-            "nullable": true
-          },
-          "year": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "category": {
-            "type": "string",
-            "nullable": true
-          },
-          "stageRace": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "detailsAvailable": {
-            "type": "boolean"
-          },
-          "pcsId": {
-            "type": "string",
-            "nullable": true
-          },
-          "pcsUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "wcsUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "pointsRetrieved": {
-            "type": "boolean"
-          },
-          "gameOrganized": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "resultsRetrieved": {
-            "type": "boolean"
-          },
-          "startListRetrieved": {
-            "type": "boolean"
-          },
-          "detailsCompleted": {
-            "type": "boolean"
-          },
-          "stageRaceId": {
+          "authenticationProviderId": {
             "type": "string",
             "nullable": true
           }
         }
       },
-      "RaceStatus": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "New",
-          "Planned",
-          "Finished",
-          "Canceled",
-          "NotFound",
-          "Error"
-        ],
-        "enum": [
-          0,
-          1,
-          3,
-          4,
-          -4,
-          -1
-        ]
-      },
-      "RaceQueryResponse": {
+      "CreateUserRequest": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "count": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "results": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "RaceUpdateRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "raceId": {
+          "userId": {
             "type": "string"
           },
-          "pcsId": {
+          "email": {
+            "type": "string"
+          },
+          "phoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "status": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/RaceStatus"
-              }
-            ]
+          "wcsUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "authenticationId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "wcsUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "authenticationId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdatePasswordRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "encryptedPassword": {
+            "type": "string"
           }
         }
       }

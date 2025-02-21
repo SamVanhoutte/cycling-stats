@@ -36,6 +36,8 @@ public class ParsingTests
     [InlineData("+ 13' 03''", 783)]
     [InlineData("+1h 02' 21''", 3741)]
     [InlineData("4h 31' 28''", 16288)]
+    [InlineData("4:20:06", 15606)]
+    [InlineData("45.25", 2725)]
     public void TestParseTime(string delay, int expectedDelay)
     {
         Assert.Equal(expectedDelay, delay.ParseTimeDelay());

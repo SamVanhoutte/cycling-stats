@@ -144,7 +144,7 @@
       "enumNameGeneratorType": null,
       "serviceHost": null,
       "serviceSchemes": null,
-      "output": "../../../aerobets/src/Aerobets.Web/CyclingStats/CyclingStatsApiClient.cs",
+      "output": "../../../aerobets/src/Aerobets.Shared/CyclingStats/CyclingStatsApiClient.cs",
       "newLineBehavior": "Auto"
     }
   }

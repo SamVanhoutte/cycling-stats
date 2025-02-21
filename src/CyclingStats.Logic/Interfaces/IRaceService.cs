@@ -11,11 +11,13 @@ public interface IRaceService
         bool? pointsRetrieved = null, bool? resultsRetrieved = null);
 
     Task<RaceDetails?> GetRaceAsync(string raceId);
+    Task<List<RaceDetails>> GetStageRaceStagesAsync(string raceId);
     Task UpsertRaceResultsAsync(Models.RaceDetails raceDetails);
     Task UpsertRacePointsAsync(Models.RaceDetails raceDetails);
     Task UpdateRaceStatusAsync(string raceId, RaceStatus newStatus);
     Task MarkRaceAsErrorAsync(string raceId, string error);
-    Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null) //, string? error = null)
-                                                                                           ;
+    Task UpsertRaceDetailsAsync(RaceDetails raceData, bool stageRaceBatch, RaceStatus? newStatus = null);
+    //Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null) //, string? error = null)
+                                                                                           
     
 }
