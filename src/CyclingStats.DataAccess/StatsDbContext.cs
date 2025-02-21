@@ -18,10 +18,12 @@ public class StatsDbContext : DbContext
     public DbSet<RaceResult> Results { get; set; }
     public DbSet<RacePoint> Points { get; set; }
     public DbSet<RiderProfile> RiderProfiles { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rider>().ToTable("Riders");
+        modelBuilder.Entity<User>().ToTable("Users", "aerobets");
         modelBuilder.Entity<RiderProfile>().ToTable("RiderProfiles");
         modelBuilder.Entity<Race>().ToTable("Races");
         modelBuilder.Entity<RaceResult>().ToTable("RaceResults");
@@ -75,6 +77,12 @@ public class StatsDbContext : DbContext
 
         var races = await query.ToListAsync();
         return races;
+    }
+    
+    public async Task<ICollection<User>> GetAllUsersAsync()
+    {
+        var users = await Users.ToListAsync();
+        return users;
     }
 
     public async Task<ICollection<Models.Rider>> GetRidersAsync(bool? detailsCompleted = null,
