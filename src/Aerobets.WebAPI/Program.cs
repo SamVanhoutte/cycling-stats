@@ -1,6 +1,7 @@
 using System.Reflection;
 using Aerozure;
 using Aerozure.Configuration;
+using Aerozure.Encryption;
 using Aerozure.Runtime;
 using CyclingStats.Logic.Configuration;
 using CyclingStats.Logic.Interfaces;
@@ -72,6 +73,8 @@ public class Program
                 configuration.GetSection("wcs").Bind(options))
             .Configure<PcsOptions>(options =>
                 configuration.GetSection("pcs").Bind(options))
+            .Configure<EncryptionSettings>(options =>
+                configuration.GetSection("encryption").Bind(options))
             .Configure<AzuremlOptions>(options => configuration.GetSection("azureml").Bind(options))
             ;
         var app = builder.Build();

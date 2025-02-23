@@ -66,7 +66,7 @@ public class UserService(IOptions<SqlOptions> sqlOptions) : IUserService
         return userDetails;
     }
 
-    public async Task<bool> SetWcsPasswordAsync(string userId, string wcsPassword)
+    public async Task<bool> SetWcsPasswordAsync(string userId, string wcsUserName, string wcsPassword)
     {
         using (var ctx = StatsDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
@@ -76,6 +76,8 @@ public class UserService(IOptions<SqlOptions> sqlOptions) : IUserService
             {
                 return false;
             }
+
+            userEntity.WcsUserName = wcsUserName;
             userEntity.WcsPasswordEncrypted = wcsPassword;
             await ctx.SaveChangesAsync();
             return true;

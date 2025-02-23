@@ -347,6 +347,9 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "username": {
+            "type": "string"
+          },
           "encryptedPassword": {
             "type": "string"
           }
