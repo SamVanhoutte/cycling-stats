@@ -1,16 +1,16 @@
 using Aerobets.WebAPI.ServiceContracts.Requests;
 using Aerobets.WebAPI.ServiceContracts.Responses;
 using Aerobets.WebAPI.ServiceContracts.Structs;
+using Aerozure.Encryption;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-
 namespace Aerobets.WebAPI.Controllers;
 
 [ApiController]
 [Route("users")]
-public class UsersController(IUserService userService) : AerobetsController
+public class UsersController(IUserService userService, IEncryptionService encryptor) : AerobetsController
 {
     /// <summary>
     /// Get the users
@@ -104,8 +104,20 @@ public class UsersController(IUserService userService) : AerobetsController
         Description = "Password updated.")]
     public async Task<IActionResult> SetWcsPassword(string userId, UpdatePasswordRequest request)
     {
-        var createdUser = await userService.SetWcsPasswordAsync(userId, request.EncryptedPassword);
-        return createdUser == false 
+        // First validate if we can decrypt the password
+        if (string.IsNullOrEmpty(request.EncryptedPassword))
+        {
+            return BadRequest("EncryptedPassword is required");
+        }
+
+        var decrypted = encryptor.Decrypt(request.EncryptedPassword);
+        if (string.IsNullOrEmpty(decrypted))
+        {
+            return BadRequest("Password is not encrypted correctly");
+        }
+
+        var userUpdated = await userService.SetWcsPasswordAsync(userId, request.Username, request.EncryptedPassword);
+        return userUpdated == false 
             ? UserNotFound(userId) 
             : Ok();
     }
