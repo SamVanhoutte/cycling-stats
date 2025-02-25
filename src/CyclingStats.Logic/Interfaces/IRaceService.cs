@@ -17,7 +17,8 @@ public interface IRaceService
     Task UpdateRaceStatusAsync(string raceId, RaceStatus newStatus);
     Task MarkRaceAsErrorAsync(string raceId, string error);
     Task UpsertRaceDetailsAsync(RaceDetails raceData, bool stageRaceBatch, RaceStatus? newStatus = null);
+    Task<StartGrid?> GetRaceStartGridAsync(string raceId);
     //Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null) //, string? error = null)
-                                                                                           
-    
+    Task UpsertRaceStartGridAsync(string raceId, StartGrid startGrid);
 }
+

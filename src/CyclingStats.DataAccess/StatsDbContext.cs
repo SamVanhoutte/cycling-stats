@@ -19,6 +19,8 @@ public class StatsDbContext : DbContext
     public DbSet<RacePoint> Points { get; set; }
     public DbSet<RiderProfile> RiderProfiles { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Game> Games { get; set; }
+    public DbSet<StartGridEntry> StartGridEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +30,8 @@ public class StatsDbContext : DbContext
         modelBuilder.Entity<Race>().ToTable("Races");
         modelBuilder.Entity<RaceResult>().ToTable("RaceResults");
         modelBuilder.Entity<RacePoint>().ToTable("RacePoints");
+        modelBuilder.Entity<StartGridEntry>().ToTable("StartGrids");
+        modelBuilder.Entity<Game>().ToTable("Games");
         // modelBuilder.Entity<StageRace>().ToTable("StageRace");
 
         modelBuilder.Entity<Race>()
@@ -43,6 +47,21 @@ public class StatsDbContext : DbContext
             .WithOne(profile => profile.Rider)
             .HasForeignKey(a => a.RiderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder
+            .Entity<Game>()
+            .HasMany(u => u.StartList)
+            .WithOne(profile => profile.Game)
+            .HasForeignKey(a => a.RaceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder
+            .Entity<StartGridEntry>()
+            .HasOne(u => u.Rider)
+            .WithMany()
+            .HasForeignKey(a => a.RiderId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 
     public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null, RaceStatus? statusToExclude = null,
@@ -78,7 +97,7 @@ public class StatsDbContext : DbContext
         var races = await query.ToListAsync();
         return races;
     }
-    
+
     public async Task<ICollection<User>> GetAllUsersAsync()
     {
         var users = await Users.ToListAsync();
@@ -86,11 +105,16 @@ public class StatsDbContext : DbContext
     }
 
     public async Task<ICollection<Models.Rider>> GetRidersAsync(bool? detailsCompleted = null,
-        string? monthToComplete = null)
+        string? monthToComplete = null, RiderStatus? status = null)
     {
         var query = Riders
             .Include(r => r.Profiles)
             .Where(r => true);
+        if (status != null)
+        {
+            query = query.Where(r => r.Status == status);
+        }
+
         if (detailsCompleted != null)
         {
             query = query.Where(r => r.DetailsCompleted == detailsCompleted);
@@ -125,7 +149,7 @@ public class StatsDbContext : DbContext
         };
     }
 
-    public async Task<List<string>> GetRidersFromResultsAsync()
+    public async Task<List<string>> GetRiderIdsFromResultsAsync()
     {
         var query = await Results.Select(r => r.RiderId).Distinct().ToListAsync();
         return query;
@@ -206,6 +230,75 @@ public class StatsDbContext : DbContext
         }
     }
 
+    public async Task UpdateGameStartGridAsync(string gameId, StartGrid startGrid)
+    {
+        try
+        {
+            // Now upsert the Game
+            var existingRace = await Games.Include(game => game.StartList).Where(game => game.RaceId == gameId).FirstOrDefaultAsync();
+            if (existingRace != null)
+            {
+                existingRace.Status = (int)startGrid.Status;
+                existingRace.StarBudget = startGrid.StarBudget;
+                existingRace.Updated = DateTime.UtcNow;
+                existingRace.StartList ??= [];
+                var existingDbEntries = existingRace.StartList!.ToList() ;
+                var gridEntries = startGrid.Riders.Select(r => CreateStartGridEntry(gameId, r)).ToList();
+
+                // Remove entries that are no longer in the new list
+                foreach (var entry in existingDbEntries.Where(
+                             entry => !gridEntries.Any(e => e.RiderId == entry.RiderId)))
+                {
+                    StartGridEntries.Remove(entry);
+                }
+
+                // Add or update entries
+                foreach (var newEntry in gridEntries)
+                {
+                    var existingEntry = existingDbEntries.FirstOrDefault(e => e.RiderId == newEntry.RiderId);
+                    if (existingEntry == null)
+                    {
+                        existingRace.StartList.Add(newEntry);
+                    }
+                    else
+                    {
+                        existingEntry.Stars = newEntry.Stars;
+                        existingEntry.RiderType = newEntry.RiderType;
+                        existingEntry.Youth = newEntry.Youth;
+                    }
+                }
+                existingRace.StartList = startGrid.Riders.Select(r => CreateStartGridEntry(gameId, r)).ToList();
+            }
+            else
+            {
+                var newRace = new Game
+                {
+                    RaceId = gameId,
+                    Status = (int)startGrid.Status,
+                    StarBudget = startGrid.StarBudget,
+                    Updated = DateTime.UtcNow,
+                    StartList = startGrid.Riders.Select(r => CreateStartGridEntry(gameId, r)).ToList()
+                };
+                Games.Add(newRace);
+            }
+
+            await SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            throw;
+        }
+    }
+
+    private StartGridEntry CreateStartGridEntry(string raceId, StartingRider entry)
+    {
+        return new StartGridEntry
+        {
+            RiderId = entry.Rider.Id, RaceId = raceId, Created = DateTime.UtcNow,
+            RiderType = (int)entry.RiderType, Stars = entry.Stars, Youth = entry.Youth
+        };
+    }
+
     public async Task MarkRaceAsErrorAsync(string raceId, string error)
     {
         if (string.IsNullOrEmpty(raceId))
@@ -219,6 +312,17 @@ public class StatsDbContext : DbContext
             //Races.Update(existingRace);
             await SaveChangesAsync();
         }
+    }
+
+    public async Task<Game?> GetRaceStartGridAsync(string raceId)
+    {
+        var game = await Games
+            .Include(game => game.StartList)
+            .ThenInclude(entry => entry.Rider)
+            .ThenInclude(rider => rider.Profiles)
+            .Where(game => game.RaceId.Equals(raceId))
+            .FirstOrDefaultAsync();
+        return game;
     }
 
     public async Task UpsertRaceDetailsAsync(Models.RaceDetails raceData, RaceStatus? newStatus = null,
@@ -291,6 +395,7 @@ public class StatsDbContext : DbContext
                 existingRace.ParcoursType = raceData.ParcoursType ?? existingRace.ParcoursType;
                 existingRace.StartlistQuality = raceData.StartlistQuality ?? existingRace.StartlistQuality;
             }
+
             existingRace.Updated = DateTime.Now;
             if (newStatus != null) existingRace.Status = newStatus.Value;
         }
@@ -298,7 +403,7 @@ public class StatsDbContext : DbContext
         await SaveChangesAsync();
     }
 
-    public async Task UpsertRiderProfilesAsync(IEnumerable<Models.Rider> riders)
+    public async Task UpsertRidersProfilesAsync(IEnumerable<Models.Rider> riders)
     {
         foreach (var rider in riders)
         {
@@ -309,24 +414,43 @@ public class StatsDbContext : DbContext
         await base.SaveChangesAsync();
     }
 
+    public async Task EnsureRiderEntities(IEnumerable<Models.Rider> riders)
+    {
+        // Step 1: take all rider ids that should be ensured
+        var riderIds = riders.Select(r => r.Id).ToList();
+
+        // Step 2: Query the database to find which of these Rider IDs already exist
+        var existingRiderIds = await Riders
+            .Where(r => riderIds.Contains(r.Id))
+            .Select(r => r.Id)
+            .ToListAsync();
+
+        // Step 3: Filter out the existing Rider IDs from the list
+        var newRiderIds = riderIds.Except(existingRiderIds).ToList();
+
+        // Step 4: Add the new Rider entities to the database
+        var newRiders = riders
+            .Where(r => newRiderIds.Contains(r.Id))
+            .Select(r => new Rider
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Team = r.Team,
+                Status = RiderStatus.New,
+                DetailsCompleted = false
+            });
+
+        await Riders.AddRangeAsync(newRiders);
+        await SaveChangesAsync();
+    }
+
     private async Task UpsertRiderAsync(Models.Rider rider, RiderStatus? riderStatus = null)
     {
         var existingRider = await Riders.FindAsync(rider.Id);
         if (existingRider == null)
         {
-            var entity = new Rider
-            {
-                Id = rider.Id, Name = rider.Name, Team = rider.Team,
-                PcsId = rider.PcsId,
-                Height = rider.Height, Ranking2019 = rider.Ranking2019,
-                Ranking2020 = rider.Ranking2020, Ranking2021 = rider.Ranking2021,
-                Ranking2022 = rider.Ranking2022, Ranking2023 = rider.Ranking2023,
-                Ranking2024 = rider.Ranking2024, Ranking2025 = rider.Ranking2025,
-                Ranking2026 = rider.Ranking2026, DetailsCompleted = true,
-                BirthYear = rider.BirthYear, Weight = rider.Weight,
-                Status = riderStatus ?? rider.Status ?? RiderStatus.New
-            };
-
+            var entity = CreateRiderEntity(rider);
+            entity.Status = riderStatus ?? entity.Status;
             await Riders.AddAsync(entity);
         }
         else
@@ -349,6 +473,22 @@ public class StatsDbContext : DbContext
             existingRider.Weight = rider.Weight;
             existingRider.Status = riderStatus ?? rider.Status ?? existingRider.Status;
         }
+    }
+
+    private Rider CreateRiderEntity(Models.Rider rider)
+    {
+        return new Rider
+        {
+            Id = rider.Id, Name = rider.Name, Team = rider.Team,
+            PcsId = rider.PcsId,
+            Height = rider.Height, Ranking2019 = rider.Ranking2019,
+            Ranking2020 = rider.Ranking2020, Ranking2021 = rider.Ranking2021,
+            Ranking2022 = rider.Ranking2022, Ranking2023 = rider.Ranking2023,
+            Ranking2024 = rider.Ranking2024, Ranking2025 = rider.Ranking2025,
+            Ranking2026 = rider.Ranking2026, DetailsCompleted = true,
+            BirthYear = rider.BirthYear, Weight = rider.Weight,
+            Status = rider.Status ?? RiderStatus.New
+        };
     }
 
     private async Task UpsertRiderProfileAsync(Models.Rider rider)

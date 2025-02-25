@@ -513,6 +513,7 @@ public class StatsCollector : IDataRetriever
                                 {
                                     race.Status = RaceStatus.Canceled;
                                 }
+
                                 break;
                             }
 
@@ -651,24 +652,34 @@ public class StatsCollector : IDataRetriever
         return null;
     }
 
-    public async Task<StartGrid> GetStartListAsync(string raceId)
+    public async Task<StartGrid?> GetStartListAsync(string raceId)
     {
         var webUrl = $"{WcsBaseUri}/game/{raceId}/team/riders";
         var doc = await securedSession.GetAuthenticatedPageAsync(webUrl);
         var teamTables = doc.DocumentNode.SelectNodes("//table[@class='block']");
         var startGrid = new StartGrid { Riders = [] };
+        var youthRiders = await GetYouthRidersAsync(raceId);
+
+        if (teamTables == null) return null;
         foreach (var teamTable in teamTables)
         {
             var teamName = teamTable.SelectSingleNode("tr[@class='header']").SelectNodes("td")[1].InnerText
                 .Replace("&nbsp;", "").Trim();
-            var riders = teamTable.ParseTable<(Models.Rider, int)>((row, position) =>
+            var riders = teamTable.ParseTable<StartingRider>((row, position) =>
             {
-                return (new Rider
+                var riderId = Rider.GetRiderIdFromUrl(row[teamName].SelectSingleNode("a").GetAttributeText("href"));
+                return new StartingRider
                 {
-                    Name = row[teamName].GetInnerText(),
-                    Team = teamName,
-                    Id = Rider.GetRiderIdFromUrl(row[teamName].SelectSingleNode("a").GetAttributeText("href"))
-                }, row["Column4"].InnerText.ParseInteger() ?? 0);
+                    Rider = new Rider
+                    {
+                        Name = row[teamName].GetInnerText(),
+                        Team = teamName,
+                        Id = riderId
+                    },
+                    Stars = row["Column4"].InnerText.ParseInteger() ?? 0,
+                    Youth = youthRiders.Contains(riderId),
+                    RiderType = GetRiderType(row["Column3"].SelectSingleNode("div").GetAttributeValue("style", ""))
+                };
             }, bodyColumnsToSkip: [1]);
             if (riders != null)
             {
@@ -676,12 +687,64 @@ public class StatsCollector : IDataRetriever
             }
         }
 
+        // check for star budget
+        var divNode = doc.DocumentNode.SelectSingleNode("//div[@class='tab-content']/div/p");
+        var summaryText = divNode?.InnerText;
+        if (!string.IsNullOrEmpty(summaryText))
+        {
+            var budgetText = summaryText.Split("combined value of more than ").LastOrDefault()?.Split(" ")
+                .FirstOrDefault();
+            if (!string.IsNullOrEmpty(budgetText))
+            {
+                startGrid.StarBudget = int.Parse(budgetText.Trim());
+            }
+        }
+
         return startGrid;
     }
 
-    private async Task SigninAsync()
+    private async Task<List<string>> GetYouthRidersAsync(string raceId)
     {
-        //user_name=sdfsdf&user_pass=sdfzerzer&user_login=
+        var webUrl = $"{WcsBaseUri}/game/{raceId}/team/youth";
+        var doc = await securedSession.GetAuthenticatedPageAsync(webUrl);
+        var teamTables = doc.DocumentNode.SelectNodes("//table[@class='block']");
+        var youths = new List<string> { };
+        if (teamTables != null)
+        {
+            foreach (var teamTable in teamTables)
+            {
+                var teamName = teamTable.SelectSingleNode("tr[@class='header']").SelectNodes("td")[1].InnerText
+                    .Replace("&nbsp;", "").Trim();
+                var riders = teamTable.ParseTable<string>((row, position)
+                        => Rider.GetRiderIdFromUrl(row[teamName].SelectSingleNode("a").GetAttributeText("href")),
+                    bodyColumnsToSkip: [1]);
+                if (riders != null)
+                {
+                    youths.AddRange(riders);
+                }
+            }
+        }
+
+        return youths;
+    }
+
+    private RiderType GetRiderType(string style)
+    {
+        if (!string.IsNullOrEmpty(style))
+        {
+            var colorCode = style.Replace("background-color:", "").Trim().Split(";").First().Trim();
+            switch (colorCode.Replace("#", "").ToLower())
+            {
+                case "c04000": return RiderType.Climber;
+                case "ff8040": return RiderType.Puncheur;
+                case "71d363": return RiderType.Sprinter;
+                case "fdd017": return RiderType.TimeTrialist;
+                case "67a3d6": return RiderType.OneDaySpecialist;
+                case "ffffff": return RiderType.Domestique;
+                default: return RiderType.Unknown;
+            }
+        }
+        return RiderType.Unknown;
     }
 
     // public async Task<RaceDetails> GetWcsRaceDataAsync(string raceId, int year, string? stageId = null)

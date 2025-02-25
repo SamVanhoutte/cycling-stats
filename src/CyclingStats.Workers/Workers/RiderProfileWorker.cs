@@ -10,15 +10,18 @@ namespace CyclingStats.Workers.Workers;
 public class RiderProfileWorker : BaseWorker<BatchConfig>
 {
     private readonly ILogger<RiderProfileWorker> logger;
+    private readonly IRiderService riderService;
     private readonly IDataRetriever resultCollector;
 
     public RiderProfileWorker(
         ILogger<RiderProfileWorker> logger,
+        IRiderService riderService,
         IDataRetriever resultCollector,
         IOptions<ScheduleOptions> scheduleOptions,
         IOptions<SqlOptions> sqlSettings) : base(scheduleOptions, sqlSettings)
     {
         this.logger = logger;
+        this.riderService = riderService;
         this.resultCollector = resultCollector;
     }
 
@@ -33,19 +36,31 @@ public class RiderProfileWorker : BaseWorker<BatchConfig>
             using (var ctx = StatsDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
-                // Get all riders that we have in the results
-                var ridersToUpdate = (await ctx.GetRidersAsync()).ToList();
-                var riderids = await ctx.GetRidersFromResultsAsync();
-
-                // First check which riders are new to be inserted
-                var missingRiderIds =riderids.Where(id => !ridersToUpdate.Any(rtu=>rtu.Id.Equals(id, StringComparison.CurrentCultureIgnoreCase))).ToList();
-                var missingRiders = missingRiderIds.Select(id => new Models.Rider{Id = id, Name = "", Team = ""}).ToList();
-                ridersToUpdate.AddRange(missingRiders);
+                var existingRiders = await ctx.GetRidersAsync();
+                var riderResultIds = await riderService.GetRidersFromResultsAsync();
+                var ridersToUpdate = new List<Rider> { };
+                
+                // Take the riders that don't have an entity yet , from the results
+                var missingRiderIds =riderResultIds.Where(id => !existingRiders.Any(rtu=>rtu.Id.Equals(id, StringComparison.CurrentCultureIgnoreCase))).ToList();
+                
+                if (config.OnlyMissingRiders)
+                {
+                    // Add the riders that have a status set to New
+                    ridersToUpdate.AddRange(existingRiders.Where(rider => rider.Status== RiderStatus.New));
+                    ridersToUpdate.AddRange(missingRiderIds.Select(id => new Models.Rider{Id = id, Name = "", Team = "", Status = RiderStatus.New}));
+                }
+                else
+                {
+                    ridersToUpdate.AddRange(missingRiderIds.Select(id => new Models.Rider{Id = id, Name = "", Team = "", Status = RiderStatus.New}));
+                    ridersToUpdate.AddRange(existingRiders);
+                }
 
                 // Filter out riders that are complete for this month
                 ridersToUpdate = ridersToUpdate.Where(r=>!(r.DetailsCompleted && r.ContainsProfile)).ToList();
-                ridersToUpdate = ridersToUpdate.Where(r=>r.Status!= RiderStatus.NotFound && r.Status!= RiderStatus.Error).ToList();
+                ridersToUpdate = ridersToUpdate.Where(r=>r.Status!= RiderStatus.NotFound && r.Status!= RiderStatus.Error && r.Status!= RiderStatus.Retired).ToList();
+                Console.WriteLine($"Riders to update: {ridersToUpdate.Count}");
                 if (config.BatchSize > 0) ridersToUpdate = ridersToUpdate.Take(config.BatchSize).ToList();
+                
                 if(ridersToUpdate.Any())
                 {
                     var profiles = new List<Models.Rider> { };
@@ -91,9 +106,7 @@ public class RiderProfileWorker : BaseWorker<BatchConfig>
                         }
                     }
 
-                    await ctx.UpsertRiderProfilesAsync(profiles);
-                    await ctx.SaveChangesAsync(stoppingToken);
-                    //var riderInfo = await resultCollector.GetRiderProfileAsync(ri)
+                    await riderService.UpsertRiderProfilesAsync(profiles);
                 }
                 else
                 {

@@ -283,9 +283,17 @@ public class DataCollectionTests
     public async Task TestStartgridAsync()
     {
         var retriever = await TestClientFactory.GetDataRetrieverAsync();
-        var results = await retriever.GetStartListAsync("tour-of-oman/2025");
-        Assert.NotNull(results);
-        Assert.DoesNotContain(results.Riders, r => r.Item2 == 0);
+        var grid = await retriever.GetStartListAsync("o-gran-camino/2025");
+        Assert.NotNull(grid);
+        Assert.True(grid.Riders.Count > 0);
+        Assert.DoesNotContain(grid.Riders, r => r.Stars == 0);
+        Assert.True(grid.StarBudget > 0);
+        Assert.True(grid.Riders.Single(r => r.Rider.Id.Equals("guilherme-mestre")).Youth);
+        Assert.Equal(RiderType.Domestique, grid.Riders.Single(r => r.Rider.Id.Equals("guilherme-mestre")).RiderType);
+        Assert.Equal(RiderType.Climber, grid.Riders.Single(r => r.Rider.Id.Equals("delio-fernandez")).RiderType);
+        Assert.Equal(RiderType.TimeTrialist, grid.Riders.Single(r => r.Rider.Id.Equals("rafael-reis")).RiderType);
+        Assert.Equal(RiderType.Puncheur, grid.Riders.Single(r => r.Rider.Id.Equals("ruben-fernandez")).RiderType);
+        Assert.Equal(RiderType.OneDaySpecialist, grid.Riders.Single(r => r.Rider.Id.Equals("xavier-canellas")).RiderType);
     }
 
     private RaceDetails GetRace(string id, bool stageRace = false)
