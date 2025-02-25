@@ -17,5 +17,5 @@ public interface IDataRetriever
     Task<string?> GetPcsRaceIdAsync(RaceDetails race);
     Task<Dictionary<string, string>> QueryPcsRaceIdsAsync(string query, int year);
     Task<string?> GetPcsRiderIdAsync(Rider rider);
-    Task<StartGrid> GetStartListAsync(string raceId);
+    Task<StartGrid?> GetStartListAsync(string raceId);
 }

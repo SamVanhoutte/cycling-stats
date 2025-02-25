@@ -77,6 +77,7 @@ public class Program
             .AddSingleton<IDataRetriever, StatsCollector>()
             .AddSingleton<IRaceDurationPredictor, AzuremlDurationPredictor>()
             .AddSingleton<IRaceService, RaceService>()
+            .AddSingleton<IRiderService, RiderService>()
             ;
         var app = builder.Build();
         app.UseOpenApi();

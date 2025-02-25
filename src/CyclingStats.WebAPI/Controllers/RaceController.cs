@@ -5,13 +5,15 @@ using CyclingStats.WebAPI.ServiceContracts.Requests;
 using CyclingStats.WebAPI.ServiceContracts.Responses;
 using CyclingStats.WebAPI.ServiceContracts.Structs;
 using Microsoft.AspNetCore.Mvc;
+using Namotion.Reflection;
 using NSwag.Annotations;
 
 namespace CyclingStats.WebAPI.Controllers;
 
 [ApiController]
 [Route("races")]
-public class RaceController(IRaceService raceService, IDataRetriever dataScraper) : AeroApiController
+public class RaceController(IRaceService raceService, IDataRetriever dataScraper, IRiderService riderService)
+    : AeroApiController
 {
     /// <summary>
     /// Get the races
@@ -88,14 +90,21 @@ public class RaceController(IRaceService raceService, IDataRetriever dataScraper
     public async Task<IActionResult> GetRaceStartList(string raceId)
     {
         raceId = raceId.FromApiNotation()!;
-        var startGrid = await dataScraper.GetStartListAsync(raceId);
-        var raceDetails = await raceService.GetRaceAsync(raceId);
-        if (raceDetails == null)
+        var startGrid = await raceService.GetRaceStartGridAsync(raceId);
+        if(startGrid == null || startGrid.Updated.AddHours(1) < DateTime.UtcNow || startGrid.Riders.Count==0)
         {
-            return NotFound($"Race {raceId} not found");
+            startGrid = await dataScraper.GetStartListAsync(raceId);
+            if (startGrid == null)
+            {
+                return NotFound($"Race {raceId} not found");
+            }
+            await raceService.UpsertRaceStartGridAsync(raceId, startGrid);
         }
 
-        var response = Race.FromDomain(raceDetails);
+        var startListRiders = new List<RiderRaceInfo> { };
+        startListRiders.AddRange(startGrid.Riders.Select(RiderRaceInfo.FromDomain));
+        var response = new StartListResponse(startListRiders, startGrid.StarBudget);
+
         return Ok(response);
     }
 

@@ -55,10 +55,10 @@ public class SecuredSession
             new KeyValuePair<string, string>("user_login", string.Empty),
         ]);
         
-        var response = await httpClient.PostAsync(wcsSettings.LoginUrl, loginData);
+        var response = await httpClient.PostAsync(wcsSettings.LoginUri, loginData);
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
-        isAuthenticated = body.Contains(wcsSettings.Username, StringComparison.InvariantCultureIgnoreCase);
+        isAuthenticated = !body.Contains("Login / Sign up", StringComparison.InvariantCultureIgnoreCase);
         return isAuthenticated;
     }
     

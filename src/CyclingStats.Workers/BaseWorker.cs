@@ -51,7 +51,14 @@ public abstract class BaseWorker<T> : BackgroundService where T: IWorkerConfig, 
                 return ;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(currentSchedule.IntervalSeconds), stoppingToken);
+            if (currentSchedule.IntervalMilliseconds > 0)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(currentSchedule.IntervalMilliseconds), stoppingToken);
+            }
+            else
+            {
+                await Task.Delay(TimeSpan.FromSeconds(currentSchedule.IntervalSeconds), stoppingToken);
+            }
         }
     }
     

@@ -5,10 +5,11 @@ using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Rider = CyclingStats.Models.Rider;
 
 namespace CyclingStats.Logic.Services;
 
-public class RaceService(IOptions<SqlOptions> sqlOptions) : IRaceService
+public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScraper) : IRaceService
 {
     private SqlOptions sqlSettings = sqlOptions.Value;
 
@@ -95,6 +96,56 @@ public class RaceService(IOptions<SqlOptions> sqlOptions) : IRaceService
         {
             await ctx.UpsertRaceDetailsAsync(raceData, newStatus, stageRaceBatch);
         }
+    }
+
+    public async Task<StartGrid?> GetRaceStartGridAsync(string raceId)
+    {
+        using (var ctx = StatsDbContext.CreateFromConnectionString(
+                   sqlSettings.ConnectionString))
+        {
+            var startGrid = await ctx.GetRaceStartGridAsync(raceId);
+            return startGrid == null? null : CreateStartGrid(startGrid);
+        }
+    }
+
+    public async Task UpsertRaceStartGridAsync(string raceId, StartGrid startGrid)
+    {
+        using (var ctx = StatsDbContext.CreateFromConnectionString(
+                   sqlSettings.ConnectionString))
+        {
+            await ctx.EnsureRiderEntities(startGrid.Riders.Select(r => r.Rider));
+            await ctx.UpdateGameStartGridAsync(raceId,startGrid);
+        }
+    }
+
+    private StartGrid CreateStartGrid(Game entity)
+    {
+        var gameStatus = (GameStatus)entity.Status;
+        return new StartGrid
+        {
+            Status = gameStatus,
+            StarBudget = entity.StarBudget ?? -1,
+            Updated = entity.Updated, 
+            Riders = entity.StartList.Select(CreateGridEntry).ToList()
+        };
+    }
+
+    private StartingRider CreateGridEntry(StartGridEntry startGridEntry)
+    {
+        var startingRider = new StartingRider
+        {
+            Stars = startGridEntry.Stars, Youth = startGridEntry.Youth ?? false
+        };
+        if (startGridEntry.Rider != null)
+        {
+            startingRider.Rider = RiderService.CreateRider(startGridEntry.Rider);
+        }
+        else
+        {
+            startingRider.Rider = new Rider { Id = startGridEntry.RiderId};
+        }
+
+        return startingRider;
     }
 
     private RaceDetails CreateRaceDetails(Race entity)
