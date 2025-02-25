@@ -8,4 +8,7 @@ public interface IUserService
     Task<UserDetails?> GetUserAsync(string userId);
     Task<UserDetails> UpsertUserAsync(UserDetails userDetails);
     Task<bool> SetWcsPasswordAsync(string userId, string wcsUserName, string wcsPassword);
+    Task<List<RiderBookmark>> GetFavoriteRidersAsync(string userId);
+    Task UpsertFavoriteRiderAsync(string userId, string riderId, string comment);
+    Task RemoveFavoriteRiderAsync(string userId, string riderId);
 }

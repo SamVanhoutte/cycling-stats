@@ -55,7 +55,7 @@ public static class ParseExtensionMethods
 
     public static DateTime? ParseDateFromText(this string? dateText, int? year = null)
     {
-        year ??= DateTime.Now.Year;
+        year ??= DateTime.UtcNow.Year;
         if (string.IsNullOrWhiteSpace(dateText)) return null;
         if (dateText.Contains('(') && dateText.Contains(')'))
         {

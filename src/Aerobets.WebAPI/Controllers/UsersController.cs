@@ -94,6 +94,59 @@ public class UsersController(IUserService userService, IEncryptionService encryp
     }
     
     /// <summary>
+    /// Get the favorite riders of a user
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    [HttpGet("{userId}/riders")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to get the riders.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(FavoriteRiderResponse),
+        Description = "Rides returned.")]
+    public async Task<IActionResult> GetFavoriteRiders(string userId)
+    {
+        var riders = await userService.GetFavoriteRidersAsync(userId);
+        var user = new FavoriteRiderResponse(riders.Select(rider => new FavoriteRider
+        {
+            Comment = rider.Comment, Rider = RiderSummary.FromDomain(rider) ,
+            FavoritedOn = rider.CreatedOn
+        }).ToArray());
+        return Ok(user);
+    }
+    
+    /// <summary>
+    /// Add favorite rider to a user
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="riderId">The id of the rider</param>
+    /// <param name="request">The details for the rider favoriting</param>
+    [HttpPost("{userId}/riders/{riderId}")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to favorite riders.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(void),
+        Description = "Rider favorited.")]
+    public async Task<IActionResult> AddFavoriteRider(string userId, string riderId, CreateFavorideRiderRequest request)
+    {
+        await userService.UpsertFavoriteRiderAsync(userId, riderId, request.Comment);
+        return Ok();
+    }
+    
+    /// <summary>
+    /// Delete favorite rider for a user
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="riderId">The id of the rider</param>
+    [HttpDelete("{userId}/riders/{riderId}")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to remove favorite riders.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(void),
+        Description = "Rider removed.")]
+    public async Task<IActionResult> RemoveFavoriteRider(string userId, string riderId)
+    {
+        await userService.RemoveFavoriteRiderAsync(userId, riderId);
+        return Ok();
+    }
+    
+    /// <summary>
     /// Set the WCS password for a user
     /// </summary>
     /// <param name="userId">The id of the user</param>

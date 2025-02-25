@@ -28,9 +28,9 @@ public class RaceDataWorker(
             if(!races.Any(r=>r.MarkForProcess))
             {
                 // Filter out races that are further than 1 month in the future
-                races = races.Where(r => r.Date == null || r.Date < DateTime.Now.AddMonths(1)).ToList();
+                races = races.Where(r => r.Date == null || r.Date < DateTime.UtcNow.AddMonths(1)).ToList();
                 races = races.Where(r => r.Status != RaceStatus.Error && r.Status != RaceStatus.Canceled).ToList();
-                races = races.Where(r => (r.Updated == null || r.Updated?.AddMinutes(config.AgeMinutes) < DateTime.Now)).ToList();
+                races = races.Where(r => (r.Updated == null || r.Updated?.AddMinutes(config.AgeMinutes) < DateTime.UtcNow)).ToList();
                 races = races.Where(r => r.DetailsCompleted==false || r.Duration == null).ToList();
             }
             else

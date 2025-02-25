@@ -30,7 +30,7 @@ public class RaceResultWorker(
                 // Only take past races and races with a category
                 races = races.Where(r => r.DetailsCompleted & !r.ResultsRetrieved).ToList();
                 races = races.Where(r => r.IsFinished).ToList();
-                races = races.Where(r => r.Updated < DateTime.Now.AddMinutes(-config.AgeMinutes)).ToList();
+                races = races.Where(r => r.Updated < DateTime.UtcNow.AddMinutes(-config.AgeMinutes)).ToList();
                 if (config.RaceScales != null)
                 {
                     races = races.Where(r => config.RaceScales.Contains(r.UciScale?.ToLower() ?? string.Empty))

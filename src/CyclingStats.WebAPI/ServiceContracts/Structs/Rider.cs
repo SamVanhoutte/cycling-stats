@@ -30,9 +30,11 @@ public class Rider
     public int Ranking2026{get;set;}
     public bool DetailsCompleted { get; set; }
     public string PcsRiderId { get; set; }
-    public RiderStatus? Status { get; set; }
-    public string WcsUrl => $"https://www.worldcyclingstats.com/en/rider/{Id}/{DateTime.Now.Year}";
-    public string PcsUrl => $"https://www.procyclingstats.com/rider/{Id}/{DateTime.Now.Year}";
+    public string? Status { get; set; }
+    public string Type { get; set; }
+
+    public string WcsUrl => $"https://www.worldcyclingstats.com/en/rider/{Id}/{DateTime.UtcNow.Year}";
+    public string PcsUrl => $"https://www.procyclingstats.com/rider/{Id}/{DateTime.UtcNow.Year}";
     public static Rider FromDomain(Models.Rider rider)
     {
         return new Rider
@@ -60,8 +62,9 @@ public class Rider
             Ranking2025 = rider.Ranking2025,
             Ranking2026 = rider.Ranking2026,
             DetailsCompleted = rider.DetailsCompleted,
-            Status = rider.Status
-            
+            Status = rider.Status.ToString(),
+            Type = rider.RiderType.ToString()
         };
     }
+
 }

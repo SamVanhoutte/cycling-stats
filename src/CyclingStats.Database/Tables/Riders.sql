@@ -8,6 +8,7 @@ CREATE TABLE [dbo].[Riders] (
     [BirthYear]    INT NOT NULL,
     [Weight]    INT NOT NULL,
     [Height]    INT NOT NULL,
+    [RiderType]    INT NULL,
     [Ranking2019]  INT NULL,
     [Ranking2020]  INT NULL,
     [Ranking2021]  INT NULL,
