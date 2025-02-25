@@ -284,7 +284,7 @@ public class StatsCollector : IDataRetriever
     public async Task<IEnumerable<Rider>> GetTeamRidersAsync(string teamName)
     {
         var web = new HtmlWeb();
-        var teamUrl = $"{WcsBaseUri}/team/{teamName}/{DateTime.Now.Year}";
+        var teamUrl = $"{WcsBaseUri}/team/{teamName}/{DateTime.UtcNow.Year}";
         var doc = await web.LoadFromWebAsync(teamUrl);
         // Check if right page
         var title = doc.DocumentNode.SelectSingleNode("//h1").GetInnerText();
@@ -509,7 +509,7 @@ public class StatsCollector : IDataRetriever
                             if (durationVal.Equals("-"))
                             {
                                 // Race canceled
-                                if (race.Date < DateTime.Now.AddDays(-1))
+                                if (race.Date < DateTime.UtcNow.AddDays(-1))
                                 {
                                     race.Status = RaceStatus.Canceled;
                                 }
@@ -585,7 +585,7 @@ public class StatsCollector : IDataRetriever
         var raceYear = race.Id.GetYearValueFromRaceId();
         //https://www.procyclingstats.com/search.php?term=Acht+van+Bladel
         var searchUrl = $"{PcsBaseUri}/search.php?term={race.Name.Replace(" ", "+")}";
-        var results = await QueryPcsRaceIdsAsync(race.Name, raceYear ?? DateTime.Now.Year);
+        var results = await QueryPcsRaceIdsAsync(race.Name, raceYear ?? DateTime.UtcNow.Year);
         return results.Any() ? results.First().Key : null;
     }
 

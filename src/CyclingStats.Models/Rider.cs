@@ -47,6 +47,7 @@ public class Rider
     public bool ContainsProfile => Puncheur >= 0 || Sprinter >= 0 || GC >= 0 || OneDay >= 0 || Climber >= 0 || TimeTrialist >= 0;
     public bool DetailsCompleted { get; set; }
     public string PcsRiderId => PcsId ?? Id;
+    public RiderType RiderType { get; set; }
     public RiderStatus? Status { get; set; }
 
     public static int ParseBirthYear(string? birthDayLine)

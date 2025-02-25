@@ -168,6 +168,143 @@
         }
       }
     },
+    "/users/{userId}/riders": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_GetFavoriteRiders",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to get the riders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Rides returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoriteRiderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/riders/{riderId}": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_AddFavoriteRider",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "riderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFavorideRiderRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to favorite riders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Rider favorited."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_RemoveFavoriteRider",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "riderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to remove favorite riders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Rider removed."
+          }
+        }
+      }
+    },
     "/users/{userId}/password/wcs": {
       "put": {
         "tags": [
@@ -340,6 +477,69 @@
           "authenticationId": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "FavoriteRiderResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "favorites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FavoriteRider"
+            }
+          }
+        }
+      },
+      "FavoriteRider": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rider": {
+            "$ref": "#/components/schemas/RiderSummary"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "favoritedOn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RiderSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "currentRanking": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateFavorideRiderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "type": "string"
           }
         }
       },

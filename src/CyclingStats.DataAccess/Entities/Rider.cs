@@ -12,6 +12,7 @@ public class Rider
     public string? PcsId { get; set; }
     public string Name { get; set; }
     public string Team { get; set; }
+    public int? RiderType {get;set;}
     public int BirthYear{get;set;}
     public int Weight{get;set;}
     public int Height{get;set;}
@@ -28,4 +29,7 @@ public class Rider
     public DateTime Updated { get; set; }
     [Column(TypeName = "nvarchar(20)")]
     public RiderStatus Status { get; set; }
+    
+    public virtual ICollection<User> FavoritedBy { get; set; } = new List<User>();
+    public virtual ICollection<UserRider> UserRiders { get; set; } = new List<UserRider>();
 }

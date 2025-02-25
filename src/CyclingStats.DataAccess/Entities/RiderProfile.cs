@@ -1,3 +1,4 @@
+using CyclingStats.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CyclingStats.DataAccess.Entities;
@@ -15,6 +16,46 @@ public class RiderProfile
     public int TimeTrialist { get; set; }
     public int UciRanking { get; set; }
     public int PcsRanking { get; set; }
+
+    public RiderType RiderType
+    {
+        get
+        {
+            var type = RiderType.Domestique;
+            var highestValue = 0;
+            if (GC > highestValue)
+            {
+                type = RiderType.GC;
+                highestValue = GC;
+            }
+            if (Sprinter > highestValue)
+            {
+                type = RiderType.Sprinter;
+                highestValue = Sprinter;
+            }
+            if (Puncheur > highestValue)
+            {
+                type = RiderType.Puncheur;
+                highestValue = Puncheur;
+            }
+            if (OneDay > highestValue)
+            {
+                type = RiderType.OneDaySpecialist;
+                highestValue = OneDay;
+            }
+            if (Climber > highestValue)
+            {
+                type = RiderType.Climber;
+                highestValue = Climber;
+            }
+            if (TimeTrialist > highestValue)
+            {
+                type = RiderType.TimeTrialist;
+                highestValue = TimeTrialist;
+            }
+            return type;
+        }
+    }
 
     public virtual Rider Rider { get; set; }
 }

@@ -38,7 +38,7 @@ public class RaceDetails
     public bool StartListRetrieved { get; set; }
     public bool DetailsCompleted { get; set; }
     public bool MarkForProcess { get; set; }
-    public bool IsFinished => !(DecidingMethod?.StartsWith('?')??false) && Date < DateTime.Now;
+    public bool IsFinished => !(DecidingMethod?.StartsWith('?')??false) && Date < DateTime.UtcNow;
     public bool IsTeamTimeTrial => PointsScale?.Contains("TTT", StringComparison.CurrentCultureIgnoreCase) ?? false;
     public DateTime? Updated { get; set; }
     public string? PcsRaceId
@@ -73,7 +73,7 @@ public class RaceDetails
         
         if (!int.TryParse(paths.Last(), out _) && !paths.Last().StartsWith("stage", StringComparison.InvariantCultureIgnoreCase))
         {
-            paths = paths.Append((year ?? DateTime.Now.Year).ToString()).ToArray();
+            paths = paths.Append((year ?? DateTime.UtcNow.Year).ToString()).ToArray();
         }
         return string.Join('/', paths);
     }

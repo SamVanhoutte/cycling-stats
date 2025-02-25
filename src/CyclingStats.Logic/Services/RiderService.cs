@@ -69,6 +69,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
     public static Rider CreateRider(CyclingStats.DataAccess.Entities.Rider rider)
     {
         var profile = rider.Profiles?.OrderByDescending(pr => pr.Month).FirstOrDefault();
+        var riderType = ((RiderType?)rider.RiderType) ?? profile?.RiderType ?? RiderType.Unknown;
         return new Rider
         {
             Id = rider.Id,
@@ -84,6 +85,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
             Ranking2026 = rider.Ranking2026,
             DetailsCompleted = rider.DetailsCompleted,
             Status = rider.Status,
+            RiderType = riderType,
             BirthYear = rider.BirthYear,
             Weight = rider.Weight,
             Height = rider.Height,

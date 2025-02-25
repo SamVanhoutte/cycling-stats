@@ -37,7 +37,7 @@ public class RacePointsWorker(
                 races = races.Take(config.BatchSize).ToList();
             }
 
-            races = races.Where(r => (r.Updated == null || r.Updated?.AddMinutes(config.AgeMinutes) < DateTime.Now))
+            races = races.Where(r => (r.Updated == null || r.Updated?.AddMinutes(config.AgeMinutes) < DateTime.UtcNow))
                 .ToList();
 
             races = races.Where(r => !r.IsTeamTimeTrial).ToList();

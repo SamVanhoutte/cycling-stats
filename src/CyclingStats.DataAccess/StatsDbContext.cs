@@ -21,7 +21,8 @@ public class StatsDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Game> Games { get; set; }
     public DbSet<StartGridEntry> StartGridEntries { get; set; }
-
+    public DbSet<UserRider> UserFavoriteRiders { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rider>().ToTable("Riders");
@@ -32,8 +33,21 @@ public class StatsDbContext : DbContext
         modelBuilder.Entity<RacePoint>().ToTable("RacePoints");
         modelBuilder.Entity<StartGridEntry>().ToTable("StartGrids");
         modelBuilder.Entity<Game>().ToTable("Games");
-        // modelBuilder.Entity<StageRace>().ToTable("StageRace");
+        modelBuilder.Entity<UserRider>().ToTable("UserRiders", "aerobets");
+        
+        modelBuilder.Entity<UserRider>()
+            .HasKey(ur => new { ur.UserId, ur.RiderId });
 
+        modelBuilder.Entity<UserRider>()
+            .HasOne(ur => ur.User)
+            .WithMany(u => u.UserRiders)
+            .HasForeignKey(ur => ur.UserId);
+
+        modelBuilder.Entity<UserRider>()
+            .HasOne(ur => ur.Rider)
+            .WithMany(r => r.UserRiders)
+            .HasForeignKey(ur => ur.RiderId);
+        
         modelBuilder.Entity<Race>()
             .Property(r => r.Status)
             .HasConversion(
@@ -62,6 +76,19 @@ public class StatsDbContext : DbContext
             .HasForeignKey(a => a.RiderId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
+        
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.FavoriteRiders)
+            .WithMany(r => r.FavoritedBy)
+            .UsingEntity<UserRider>(
+                j => j
+                    .HasOne(ur => ur.Rider)
+                    .WithMany(r => r.UserRiders)
+                    .HasForeignKey(ur => ur.RiderId),
+                j => j
+                    .HasOne(ur => ur.User)
+                    .WithMany(u => u.UserRiders)
+                    .HasForeignKey(ur => ur.UserId));
     }
 
     public async Task<ICollection<Race>> GetAllRacesAsync(RaceStatus? status = null, RaceStatus? statusToExclude = null,
@@ -131,7 +158,8 @@ public class StatsDbContext : DbContext
 
     private static Models.Rider CreateRider(Rider entity)
     {
-        var recentProfile = entity.Profiles?.FirstOrDefault(p => p.Month == DateTime.Now.ToString("yyMM"));
+        var recentProfile = entity.Profiles?.FirstOrDefault(p => p.Month == DateTime.UtcNow.ToString("yyMM"));
+        var riderType =  (RiderType?)entity.RiderType ?? recentProfile?.RiderType ?? RiderType.Unknown;
         return new Models.Rider
         {
             Id = entity.Id, Name = entity.Name, Team = entity.Team,
@@ -142,6 +170,7 @@ public class StatsDbContext : DbContext
             Ranking2024 = entity.Ranking2024, Ranking2025 = entity.Ranking2025,
             Ranking2026 = entity.Ranking2026, DetailsCompleted = entity.DetailsCompleted,
             BirthYear = entity.BirthYear, Weight = entity.Weight,
+            RiderType = riderType,
             Sprinter = recentProfile?.Sprinter ?? -1, Climber = recentProfile?.Climber ?? -1,
             Puncheur = recentProfile?.Puncheur ?? -1, GC = recentProfile?.GC ?? -1,
             OneDay = recentProfile?.OneDay ?? -1, TimeTrialist = recentProfile?.TimeTrialist ?? -1,
@@ -308,7 +337,7 @@ public class StatsDbContext : DbContext
         {
             existingRace.Status = RaceStatus.Error;
             existingRace.Error = error;
-            existingRace.Updated = DateTime.Now;
+            existingRace.Updated = DateTime.UtcNow;
             //Races.Update(existingRace);
             await SaveChangesAsync();
         }
@@ -396,7 +425,7 @@ public class StatsDbContext : DbContext
                 existingRace.StartlistQuality = raceData.StartlistQuality ?? existingRace.StartlistQuality;
             }
 
-            existingRace.Updated = DateTime.Now;
+            existingRace.Updated = DateTime.UtcNow;
             if (newStatus != null) existingRace.Status = newStatus.Value;
         }
 
@@ -469,6 +498,7 @@ public class StatsDbContext : DbContext
             existingRider.Ranking2024 = rider.Ranking2024;
             existingRider.Ranking2025 = rider.Ranking2025;
             existingRider.Ranking2026 = rider.Ranking2026;
+            existingRider.RiderType = (int?)rider.RiderType;
             existingRider.BirthYear = rider.BirthYear;
             existingRider.Weight = rider.Weight;
             existingRider.Status = riderStatus ?? rider.Status ?? existingRider.Status;
@@ -486,6 +516,7 @@ public class StatsDbContext : DbContext
             Ranking2022 = rider.Ranking2022, Ranking2023 = rider.Ranking2023,
             Ranking2024 = rider.Ranking2024, Ranking2025 = rider.Ranking2025,
             Ranking2026 = rider.Ranking2026, DetailsCompleted = true,
+            RiderType = (int?)rider.RiderType,
             BirthYear = rider.BirthYear, Weight = rider.Weight,
             Status = rider.Status ?? RiderStatus.New
         };
@@ -495,7 +526,7 @@ public class StatsDbContext : DbContext
     {
         if (rider.ContainsProfile)
         {
-            var month = DateTime.Now.ToString("yyMM");
+            var month = DateTime.UtcNow.ToString("yyMM");
             var existingProfile = await RiderProfiles.FindAsync(rider.Id, month);
             if (existingProfile == null)
             {

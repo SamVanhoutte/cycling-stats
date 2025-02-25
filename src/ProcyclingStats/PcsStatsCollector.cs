@@ -67,7 +67,7 @@
 //     public async Task<IEnumerable<Rider>> GetTeamRidersAsync(string teamName)
 //     {
 //         var web = new HtmlWeb();
-//         var teamUrl = $"{BaseUri}/team/{teamName}/{DateTime.Now.Year}";
+//         var teamUrl = $"{BaseUri}/team/{teamName}/{DateTime.UtcNow.Year}";
 //         var doc = await web.LoadFromWebAsync(teamUrl);
 //         // Check if right page
 //         var title = GetInnerText(doc.DocumentNode.SelectSingleNode("//h1"));
