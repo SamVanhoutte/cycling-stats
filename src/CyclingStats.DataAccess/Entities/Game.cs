@@ -11,4 +11,5 @@ public class Game
     public DateTime Updated { get; set; }
     
     public virtual ICollection<StartGridEntry>? StartList { get; set; }
+    public virtual ICollection<UserGame> UserGames { get; set; } = new List<UserGame>();
 }

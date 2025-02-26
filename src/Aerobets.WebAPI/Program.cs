@@ -34,6 +34,7 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddOpenApiDocument(document => { GenerateOpenApiSpec(document, "v1"); });
         builder.Services.AddTransient<IUserService, UserService>();
+        builder.Services.AddTransient<IGameService, GameService>();
         builder.Services.AddHealthChecks();
 
 

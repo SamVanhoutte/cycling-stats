@@ -11,4 +11,7 @@ public interface IUserService
     Task<List<RiderBookmark>> GetFavoriteRidersAsync(string userId);
     Task UpsertFavoriteRiderAsync(string userId, string riderId, string comment);
     Task RemoveFavoriteRiderAsync(string userId, string riderId);
+    Task<List<PlayerWatcher>> GetPlayerWatchlistAsync(string userId);
+    Task UpsertPlayerToWatchAsync(string userId, PlayerWatcher player);
+    Task RemovePlayerFromWatchlistAsync(string userId, string wcsUserName);
 }

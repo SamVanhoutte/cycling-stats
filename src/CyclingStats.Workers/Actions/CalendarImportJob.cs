@@ -32,7 +32,7 @@ public class CalendarImportJob : BaseWorker<BatchConfig>
             var yearToImport = config.ConfiguredYear?? DateTime.UtcNow.Year;
             var yearsRaces = await resultCollector.GetRaceCalendarAsync(yearToImport);
             
-            using (var ctx = StatsDbContext.CreateFromConnectionString(
+            using (var ctx = CyclingDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
                 foreach (var race in yearsRaces)

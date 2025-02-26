@@ -29,6 +29,7 @@ public class UsersController(IUserService userService, IEncryptionService encryp
     /// <summary>
     /// Get the user details
     /// </summary>
+    /// <param name="userId">The id of the user</param>
     [HttpGet("{userId}")]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
         Description = "Not authorized to retrieve user.")]
@@ -59,6 +60,7 @@ public class UsersController(IUserService userService, IEncryptionService encryp
         var user = new UserDetails
         {
             UserId = request.UserId,
+            Name = request.Name,
             Email = request.Email,
             Phone = request.PhoneNumber,
             WcsUserName = request.WcsUserName,
@@ -82,6 +84,7 @@ public class UsersController(IUserService userService, IEncryptionService encryp
     {
         var user = new UserDetails
         {
+            Name = request.Name,
             UserId = userId,
             Email = request.Email,
             Phone = request.PhoneNumber,
@@ -101,7 +104,7 @@ public class UsersController(IUserService userService, IEncryptionService encryp
     [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
         Description = "Not authorized to get the riders.")]
     [SwaggerResponse(StatusCodes.Status200OK, typeof(FavoriteRiderResponse),
-        Description = "Rides returned.")]
+        Description = "Riders returned.")]
     public async Task<IActionResult> GetFavoriteRiders(string userId)
     {
         var riders = await userService.GetFavoriteRidersAsync(userId);
@@ -143,6 +146,62 @@ public class UsersController(IUserService userService, IEncryptionService encryp
     public async Task<IActionResult> RemoveFavoriteRider(string userId, string riderId)
     {
         await userService.RemoveFavoriteRiderAsync(userId, riderId);
+        return Ok();
+    }
+    
+    /// <summary>
+    /// Get the wcs users watchlist for a user
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    [HttpGet("{userId}/watchlist")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to get the watchlist.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(UserWatchListResponse),
+        Description = "Watchlist of the user.")]
+    public async Task<IActionResult> GetUserWatchList(string userId)
+    {
+        var watchList = await userService.GetPlayerWatchlistAsync(userId);
+        var user = new UserWatchListResponse(watchList.Select(PlayerWatchListItem.FromDomain).ToArray());
+        return Ok(user);
+    }
+    
+    /// <summary>
+    /// Add user to a watchlist
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="wcsUserName">The user name of the player</param>
+    /// <param name="request">The details for the player to watch</param>
+    [HttpPost("{userId}/watchlist/{wcsUserName}")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to add player to watch list.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(void),
+        Description = "Player added.")]
+    public async Task<IActionResult> AddPlayerToWatch(string userId, string wcsUserName, WatchPlayerRequest request)
+    {
+        await userService.UpsertPlayerToWatchAsync(userId,new PlayerWatcher
+        {
+            WcsUserName = wcsUserName,
+            Comment = request.Comment,
+            MainOpponent = request.MainOpponent,
+            Name = request.Name,
+            Created = DateTime.UtcNow
+        });
+        return Ok();
+    }
+    
+    /// <summary>
+    /// Delete a player from the watchlist for a user
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="wcsUserName">The user name of the player</param>
+    [HttpDelete("{userId}/watchlist/{wcsUserName}")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to remove player from watchlist.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(void),
+        Description = "Player removed.")]
+    public async Task<IActionResult> RemovePlayerToWatch(string userId, string wcsUserName)
+    {
+        await userService.RemovePlayerFromWatchlistAsync(userId, wcsUserName);
         return Ok();
     }
     

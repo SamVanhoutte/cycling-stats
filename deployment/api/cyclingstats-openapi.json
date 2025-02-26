@@ -6,6 +6,143 @@
     "version": "1.0.0.0"
   },
   "paths": {
+    "/users/{UserId}/games": {
+      "get": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_GetUserGames",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve games for the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Game list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGamesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{UserId}/games/{raceId}": {
+      "post": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_AddGame",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserGameRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to add a game.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Game favorited."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_RemoveUserGame",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to remove favorite riders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Rider removed."
+          }
+        }
+      }
+    },
     "/users": {
       "get": {
         "tags": [
@@ -197,7 +334,7 @@
             }
           },
           "200": {
-            "description": "Rides returned.",
+            "description": "Riders returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -305,6 +442,145 @@
         }
       }
     },
+    "/users/{userId}/watchlist": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_GetUserWatchList",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to get the watchlist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Watchlist of the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWatchListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/watchlist/{wcsUserName}": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_AddPlayerToWatch",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "wcsUserName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchPlayerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to add player to watch list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Player added."
+          }
+        }
+      }
+    },
+    "/users/{userId}/players/{wcsUserName}": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "Users_RemovePlayerToWatch",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "wcsUserName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to remove player from watchlist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Player removed."
+          }
+        }
+      }
+    },
     "/users/{userId}/password/wcs": {
       "put": {
         "tags": [
@@ -383,6 +659,71 @@
           }
         }
       },
+      "UserGamesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserGame"
+            }
+          }
+        }
+      },
+      "UserGame": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserGameResult"
+            }
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "UserGameResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateUserGameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
       "UserListResponse": {
         "type": "object",
         "additionalProperties": false,
@@ -406,14 +747,13 @@
           "userId": {
             "type": "string"
           },
+          "name": {
+            "type": "string"
+          },
           "email": {
             "type": "string"
           },
           "phoneNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "wcsUserName": {
             "type": "string",
             "nullable": true
           },
@@ -422,6 +762,24 @@
             "nullable": true
           },
           "authenticationProviderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "wcsSettings": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WcsUserSettings"
+              }
+            ]
+          }
+        }
+      },
+      "WcsUserSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
             "type": "string",
             "nullable": true
           }
@@ -435,6 +793,9 @@
             "type": "string"
           },
           "email": {
+            "type": "string"
+          },
+          "name": {
             "type": "string"
           },
           "phoneNumber": {
@@ -460,6 +821,9 @@
         "additionalProperties": false,
         "properties": {
           "email": {
+            "type": "string"
+          },
+          "name": {
             "type": "string"
           },
           "phoneNumber": {
@@ -540,6 +904,92 @@
         "properties": {
           "comment": {
             "type": "string"
+          }
+        }
+      },
+      "UserWatchListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "watchlist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayerWatchListItem"
+            }
+          }
+        }
+      },
+      "PlayerWatchListItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "playerUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "wcsUserName": {
+            "type": "string"
+          },
+          "mainOpponent": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              }
+            ]
+          }
+        }
+      },
+      "UserSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "wcsUserName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "WatchPlayerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "type": "string"
+          },
+          "mainOpponent": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

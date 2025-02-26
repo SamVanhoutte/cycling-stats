@@ -33,7 +33,7 @@ public class RiderProfileWorker : BaseWorker<BatchConfig>
     {
         try
         {
-            using (var ctx = StatsDbContext.CreateFromConnectionString(
+            using (var ctx = CyclingDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
                 var existingRiders = await ctx.GetRidersAsync();

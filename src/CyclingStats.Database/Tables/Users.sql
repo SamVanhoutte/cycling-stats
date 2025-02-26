@@ -1,6 +1,7 @@
 CREATE TABLE [aerobets].[Users]
 (
   UserId NVARCHAR(255) NOT NULL PRIMARY KEY,
+  Name NVARCHAR(255) NOT NULL,
   Email NVARCHAR(255) NOT NULL,
   AuthenticationId NVARCHAR(255) NULL,
   WcsUserName NVARCHAR(64) NULL,

@@ -13,9 +13,12 @@ public class User
     public string? Phone { get; set; }
     public string? Language { get; set; }
     public DateTime Updated { get; set; }
-    
+    public string Name { get; set; }
+
     //public virtual ICollection<UserRider> UserRiders { get; set; } = new List<UserRider>();
     public virtual ICollection<Rider> FavoriteRiders { get; set; } = new List<Rider>();
     public virtual ICollection<UserRider> UserRiders { get; set; } = new List<UserRider>();
-
+    public virtual ICollection<UserGame> UserGames { get; set; } = new List<UserGame>();
+    
+    public virtual ICollection<PlayerToWatch> PlayersToWatch { get; set; } = new List<PlayerToWatch>();
 }

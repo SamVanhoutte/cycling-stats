@@ -5,5 +5,4 @@ CREATE TABLE [aerobets].[UserRiders]
   Comment NVARCHAR(MAX) NULL,
   Created DATETIME NOT NULL DEFAULT getdate(),
   CONSTRAINT PK_UserRiders PRIMARY KEY (UserId, RiderId)
-
 )

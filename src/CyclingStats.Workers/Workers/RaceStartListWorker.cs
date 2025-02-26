@@ -30,7 +30,7 @@ public class RaceStartListWorker : BaseWorker<BatchConfig>
     {
         try
         {
-            using (var ctx = StatsDbContext.CreateFromConnectionString(
+            using (var ctx = CyclingDbContext.CreateFromConnectionString(
                        sqlSettings.ConnectionString))
             {
                 var races = await ctx.GetAllRacesAsync(RaceStatus.Planned);

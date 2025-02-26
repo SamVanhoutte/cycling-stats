@@ -15,7 +15,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task<List<RaceDetails>> GetRaceDataAsync()
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             return (await ctx.GetAllRacesAsync()).Select(CreateRaceDetails).ToList();
@@ -25,7 +25,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
     public async Task<ICollection<RaceDetails>> GetRacesAsync(RaceStatus? status = null, RaceStatus? statusToExclude = null, bool? detailsCompleted = null,
         bool? pointsRetrieved = null, bool? resultsRetrieved = null)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             return (await ctx.GetAllRacesAsync(status, statusToExclude, detailsCompleted, pointsRetrieved, resultsRetrieved)).Select(CreateRaceDetails).ToList();
@@ -34,7 +34,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task<RaceDetails?> GetRaceAsync(string raceId)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             var raceEntity = await ctx.Races.FindAsync(raceId);
@@ -44,7 +44,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
     
     public async Task<List<RaceDetails>> GetStageRaceStagesAsync(string raceId)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             var raceEntities = await ctx.Races.Where(r =>
@@ -55,7 +55,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task UpsertRaceResultsAsync(RaceDetails raceDetails)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.UpsertRaceResultsAsync(raceDetails);
@@ -64,7 +64,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task UpsertRacePointsAsync(RaceDetails raceDetails)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.UpsertRacePointsAsync(raceDetails);
@@ -73,7 +73,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task UpdateRaceStatusAsync(string raceId, RaceStatus newStatus)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.UpdateRaceStatusAsync(raceId, newStatus);
@@ -82,7 +82,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task MarkRaceAsErrorAsync(string raceId, string error)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.MarkRaceAsErrorAsync(raceId, error);
@@ -91,7 +91,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task UpsertRaceDetailsAsync(RaceDetails raceData, bool stageRaceBatch, RaceStatus? newStatus = null)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.UpsertRaceDetailsAsync(raceData, newStatus, stageRaceBatch);
@@ -100,7 +100,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task<StartGrid?> GetRaceStartGridAsync(string raceId)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             var startGrid = await ctx.GetRaceStartGridAsync(raceId);
@@ -110,7 +110,7 @@ public class RaceService(IOptions<SqlOptions> sqlOptions, IDataRetriever dataScr
 
     public async Task UpsertRaceStartGridAsync(string raceId, StartGrid startGrid)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.EnsureRiderEntities(startGrid.Riders.Select(r => r.Rider));

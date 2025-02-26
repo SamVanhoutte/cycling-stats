@@ -16,7 +16,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
 
     public async Task<List<string>> GetRidersFromResultsAsync()
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             return await ctx.GetRiderIdsFromResultsAsync();
@@ -25,7 +25,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
 
     public async Task UpsertRiderProfilesAsync(IEnumerable<Rider> riders)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             await ctx.UpsertRidersProfilesAsync(riders);
@@ -36,7 +36,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
     public async Task<ICollection<Rider>> GetRidersAsync(bool? detailsCompleted = null, bool? excludeRetiredRiders = null,
         string? monthToComplete = null)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             var query =  ctx.Riders
@@ -54,7 +54,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
 
     public async Task<Rider?> GetRiderAsync(string riderId)
     {
-        using (var ctx = StatsDbContext.CreateFromConnectionString(
+        using (var ctx = CyclingDbContext.CreateFromConnectionString(
                    sqlSettings.ConnectionString))
         {
             var rider =  await ctx.Riders
