@@ -1,7 +1,7 @@
 using CyclingStats.Models;
 using CyclingStats.Models.Extensions;
 
-namespace CyclingStats.WebAPI.ServiceContracts.Structs;
+namespace CyclingStats.WebApi.Models;
 
 public class Race
 {

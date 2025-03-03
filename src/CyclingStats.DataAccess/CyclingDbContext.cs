@@ -23,6 +23,7 @@ public partial class CyclingDbContext : DbContext
     public DbSet<StartGridEntry> StartGridEntries { get; set; }
     public DbSet<UserRider> UserFavoriteRiders { get; set; }
     public DbSet<UserGame> UserGames { get; set; }
+    public DbSet<UserTeam> UserGameTeams { get; set; }
     public DbSet<PlayerToWatch> WatchedPlayers { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,6 +38,7 @@ public partial class CyclingDbContext : DbContext
         modelBuilder.Entity<Game>().ToTable("Games");
         modelBuilder.Entity<UserRider>().ToTable("UserRiders", "aerobets");
         modelBuilder.Entity<UserGame>().ToTable("UserGames", "aerobets");
+        modelBuilder.Entity<UserTeam>().ToTable("UserTeams", "aerobets");
         modelBuilder.Entity<PlayerToWatch>().ToTable("PlayerWatchLists", "aerobets");
         
         modelBuilder.Entity<UserRider>()
@@ -72,6 +74,22 @@ public partial class CyclingDbContext : DbContext
                 v => (RaceStatus)Enum.Parse(typeof(RaceStatus), v))
             ;
 
+        modelBuilder
+            .Entity<Race>()
+            .HasMany(u => u.Results)
+            .WithOne(result => result.Race)
+            .HasForeignKey(a => a.RaceId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
+        
+        modelBuilder
+            .Entity<Race>()
+            .HasMany(u => u.Points)
+            .WithOne(result => result.Race)
+            .HasForeignKey(a => a.RaceId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
+        
         modelBuilder
             .Entity<User>()
             .HasMany(u => u.PlayersToWatch)
@@ -114,8 +132,14 @@ public partial class CyclingDbContext : DbContext
                     .HasOne(ur => ur.User)
                     .WithMany(u => u.UserRiders)
                     .HasForeignKey(ur => ur.UserId));
-        
 
+        modelBuilder.Entity<UserTeam>()
+            .HasOne(ur => ur.User)
+            .WithMany(r => r.Teams)
+            .HasForeignKey(ur => ur.UserId);
+
+        modelBuilder
+            .Entity<UserTeam>();
     }
 
     public static CyclingDbContext CreateFromConnectionString(string connectionString)

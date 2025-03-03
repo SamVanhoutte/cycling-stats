@@ -27,6 +27,10 @@ public class RacePointsWorker(
                 statusToExclude: RaceStatus.NotFound);
             // Only take finished races with PointsRetrieved set to false
             races = races.Where(r => r.IsFinished).ToList();
+            if (config.Year > 0)
+            {
+                races = races.Where(r => r.Date?.Year == config.Year).ToList();
+            }
             if (config.RaceScales != null)
             {
                 races = races.Where(r => config.RaceScales.Contains(r.UciScale?.ToLower() ?? string.Empty)).ToList();

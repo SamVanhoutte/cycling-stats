@@ -1,6 +1,6 @@
 using CyclingStats.Models;
 
-namespace CyclingStats.WebAPI.ServiceContracts.Structs;
+namespace CyclingStats.WebApi.Models;
 
 public class RiderSummary
 {

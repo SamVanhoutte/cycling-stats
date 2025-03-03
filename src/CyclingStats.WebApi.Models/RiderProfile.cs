@@ -1,4 +1,4 @@
-namespace CyclingStats.WebAPI.ServiceContracts.Structs;
+namespace CyclingStats.WebApi.Models;
 
 public class RiderProfile
 {

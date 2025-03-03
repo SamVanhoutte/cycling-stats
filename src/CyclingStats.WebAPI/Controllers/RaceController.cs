@@ -1,9 +1,9 @@
 using Aerozure.Api;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models.Extensions;
+using CyclingStats.WebApi.Models;
 using CyclingStats.WebAPI.ServiceContracts.Requests;
 using CyclingStats.WebAPI.ServiceContracts.Responses;
-using CyclingStats.WebAPI.ServiceContracts.Structs;
 using Microsoft.AspNetCore.Mvc;
 using Namotion.Reflection;
 using NSwag.Annotations;
@@ -29,6 +29,38 @@ public class RaceController(IRaceService raceService, IDataRetriever dataScraper
         var races = await raceService.GetRaceDataAsync();
         races = races.Where(
             r => r.Date?.Year == (year ?? r.Date?.Year)
+        ).ToList();
+
+        var raceList = new List<Race> { };
+        // Take one day races first
+        raceList.AddRange(races.Where(r => r.IsStageRace == false).Select(Race.FromDomain));
+
+        // Then add the stage races with stages as children
+        foreach (var race in races.Where(r => r.IsStageRace && string.IsNullOrEmpty(r.StageId)))
+        {
+            var stages = races.Where(r => r.StageRaceId?.Equals(race.Id) ?? false);
+            raceList.Add(Race.FromDomain(race, stages.ToArray()));
+        }
+
+        raceList = raceList.OrderBy(r => r.Date).ToList();
+
+        return Ok(new RaceListResponse(raceList));
+    }
+    
+    /// <summary>
+    /// Get the next upcoming races
+    /// </summary>
+    [HttpGet("current")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, typeof(ProblemDetails),
+        Description = "Not authorized to retrieve races.")]
+    [SwaggerResponse(StatusCodes.Status200OK, typeof(RaceListResponse),
+        Description = "Race list.")]
+    public async Task<IActionResult> GetCurrentRaces([FromQuery] int number = 10)
+    {
+        // Query by year
+        var races = await raceService.GetRaceDataAsync();
+        races = races.Where(
+            r => r.Date > DateTime.UtcNow.AddDays(-7) && r.Date <= DateTime.UtcNow.AddDays(7)
         ).ToList();
 
         var raceList = new List<Race> { };

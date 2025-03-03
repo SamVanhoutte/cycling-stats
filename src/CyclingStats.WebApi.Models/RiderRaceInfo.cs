@@ -1,13 +1,13 @@
 using System.Text;
 using CyclingStats.Models;
 
-namespace CyclingStats.WebAPI.ServiceContracts.Structs;
+namespace CyclingStats.WebApi.Models;
 
 public class RiderRaceInfo
 {
     public RiderSummary Rider { get; set; }
     public RiderProfile? Profile { get; set; }
-    
+    public bool YouthRider { get; set; }
     public string RiderType { get; set; }
     public int Stars { get; set; }
 
@@ -24,9 +24,6 @@ public class RiderRaceInfo
             return b.ToString();
         }
     }
-
-    public bool YouthRider { get; set; }
-    
 
     public static RiderRaceInfo FromDomain(StartingRider gridEntry)
     {

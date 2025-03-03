@@ -48,7 +48,7 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
                 query = query.Where(x => x.Status != RiderStatus.Retired);
             }
             var riders = await query.ToListAsync();
-            return riders.Select(CreateRider).ToList();
+            return riders.Select(r => CreateRider(r)!).ToList();
         }
     }
 
@@ -66,8 +66,12 @@ public class RiderService(IOptions<SqlOptions> sqlOptions) : IRiderService
         }
     }
 
-    public static Rider CreateRider(CyclingStats.DataAccess.Entities.Rider rider)
+    public static Rider? CreateRider(CyclingStats.DataAccess.Entities.Rider? rider, string? riderId = null)
     {
+        if(rider == null)
+        {
+            return string.IsNullOrEmpty(riderId) ? null : new Rider{Id = riderId};
+        }
         var profile = rider.Profiles?.OrderByDescending(pr => pr.Month).FirstOrDefault();
         var riderType = ((RiderType?)rider.RiderType) ?? profile?.RiderType ?? RiderType.Unknown;
         return new Rider

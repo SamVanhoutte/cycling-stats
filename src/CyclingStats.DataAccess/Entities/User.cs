@@ -21,4 +21,5 @@ public class User
     public virtual ICollection<UserGame> UserGames { get; set; } = new List<UserGame>();
     
     public virtual ICollection<PlayerToWatch> PlayersToWatch { get; set; } = new List<PlayerToWatch>();
+    public virtual ICollection<UserTeam>? Teams { get; set; } = new List<UserTeam>();
 }

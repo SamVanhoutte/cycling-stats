@@ -34,7 +34,6 @@ public class Race
     public bool StartListRetrieved { get; set; }
     public bool DetailsCompleted { get; set; }
     public bool? MarkForProcess { get; set; }
-    public ICollection<RaceResult>? Results { get; set; }
     public string? StageRaceId { get; set; }
     public string? StageId { get; set; }
     public DateTime? Updated { get; set; }
@@ -42,4 +41,7 @@ public class Race
     public string? WcsUrl { get; set; }
     public bool? GameOrganized { get; set; }
     public int? Duration { get; set; }
+    public ICollection<RaceResult>? Results { get; set; }
+    public ICollection<RacePoint>? Points { get; set; }
+
 }

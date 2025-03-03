@@ -31,6 +31,10 @@ public class RaceResultWorker(
                 races = races.Where(r => r.DetailsCompleted & !r.ResultsRetrieved).ToList();
                 races = races.Where(r => r.IsFinished).ToList();
                 races = races.Where(r => r.Updated < DateTime.UtcNow.AddMinutes(-config.AgeMinutes)).ToList();
+                if (config.Year > 0)
+                {
+                    races = races.Where(r => r.Date?.Year == config.Year).ToList();
+                }
                 if (config.RaceScales != null)
                 {
                     races = races.Where(r => config.RaceScales.Contains(r.UciScale?.ToLower() ?? string.Empty))
@@ -42,6 +46,7 @@ public class RaceResultWorker(
                 races = races.Where(r => r.MarkForProcess).ToList();
             }
 
+            Console.WriteLine($"{races.Count} races to be collected");
             if (config.BatchSize > 0)
             {
                 races = races.Take(config.BatchSize).ToList();

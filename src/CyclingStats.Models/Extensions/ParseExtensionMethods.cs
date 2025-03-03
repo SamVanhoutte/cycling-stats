@@ -52,6 +52,13 @@ public static class ParseExtensionMethods
         if (string.IsNullOrWhiteSpace(yearValue)) return year;
         return int.Parse(yearValue);
     }
+    
+    public static string? ChangeYear(this string? raceId, int year)
+    {
+        var raceYear = raceId.GetYearValueFromRaceId();
+        if (raceYear == null) return null;
+        return raceId!.Replace(raceYear.ToString()!, year.ToString());
+    }
 
     public static DateTime? ParseDateFromText(this string? dateText, int? year = null)
     {

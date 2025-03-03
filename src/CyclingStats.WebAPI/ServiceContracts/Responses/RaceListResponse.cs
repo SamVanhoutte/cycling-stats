@@ -1,4 +1,4 @@
-using CyclingStats.WebAPI.ServiceContracts.Structs;
+using CyclingStats.WebApi.Models;
 
 namespace CyclingStats.WebAPI.ServiceContracts.Responses;
 

@@ -61,16 +61,76 @@ public class GameService(IOptions<SqlOptions> sqlOptions, IUserService userServi
     {
         await using var ctx = CyclingDbContext.CreateFromConnectionString(
             sqlSettings.ConnectionString);
-        await ctx.UserGames.Where(ufr => ufr.UserId==userId && ufr.GameId==raceId).ExecuteDeleteAsync();
+        await ctx.UserGames.Where(ufr => ufr.UserId == userId && ufr.GameId == raceId).ExecuteDeleteAsync();
     }
-    
+
+    public async Task<List<UserGameTeam>> GetUserGameTeamsAsync(string userId, string gameId)
+    {
+        await using var ctx = CyclingDbContext.CreateFromConnectionString(
+            sqlSettings.ConnectionString);
+        var gameEntities = await ctx.UserGameTeams.Where(team => team.GameId == gameId && team.UserId == userId)
+            .ToListAsync();
+
+        return gameEntities.Select(CreateGameTeam).ToList();
+    }
+
+
+
+    public async Task UpsertUserGameTeamAsync(string userId, string gameId, Guid? teamId, UserGameTeam team)
+    {
+        await using var ctx = CyclingDbContext.CreateFromConnectionString(
+            sqlSettings.ConnectionString);
+
+        teamId ??= Guid.NewGuid();
+        var teamEntity = await ctx.UserGameTeams.FindAsync(teamId);
+        if (teamEntity == null)
+        {
+            ctx.UserGameTeams.Add(new UserTeam()
+            {
+                UserId = userId,
+                TeamId = teamId.Value,
+                GameId = gameId,
+                Comment = team.Comment,
+                Name = team.Name,
+                TeamListJson = System.Text.Json.JsonSerializer.Serialize(team.Riders),
+                Created = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            teamEntity.Comment = team.Comment ?? "";
+            teamEntity.Name = team.Name;
+            teamEntity.TeamListJson = System.Text.Json.JsonSerializer.Serialize(team.Riders);
+            teamEntity.Created = DateTime.UtcNow;
+        }
+        await ctx.SaveChangesAsync();
+    }
+
+    public async Task DeleteUserGameTeamAsync(string userId, Guid teamId)
+    {
+        await using var ctx = CyclingDbContext.CreateFromConnectionString(
+            sqlSettings.ConnectionString);
+        await ctx.UserGameTeams.Where(ufr => ufr.TeamId == teamId && ufr.UserId == userId).ExecuteDeleteAsync();
+    }
+
 
     private RiderBookmark CreateBookmark(UserRider favorite)
     {
         return new RiderBookmark
         {
-            Rider = RiderService.CreateRider( favorite.Rider), CreatedOn = favorite.Created, Comment = favorite.Comment
+            Rider = RiderService.CreateRider(favorite.Rider), CreatedOn = favorite.Created, Comment = favorite.Comment
         };
     }
-
+    
+    private UserGameTeam CreateGameTeam(UserTeam entity)
+    {
+        return new UserGameTeam
+        {
+            TeamId = entity.TeamId.ToString(),
+            Name = entity.Name,
+            Comment = entity.Comment,
+            LastSaved = entity.Created,
+            Riders = System.Text.Json.JsonSerializer.Deserialize<List<TeamRider>>(entity.TeamListJson)
+        };
+    }
 }

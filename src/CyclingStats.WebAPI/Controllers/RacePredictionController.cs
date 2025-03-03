@@ -1,8 +1,8 @@
 using Aerozure.Api;
 using CyclingStats.Logic.Interfaces;
 using CyclingStats.Models.Extensions;
+using CyclingStats.WebApi.Models;
 using CyclingStats.WebAPI.ServiceContracts.Responses;
-using CyclingStats.WebAPI.ServiceContracts.Structs;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using RaceDurationPrediction = CyclingStats.Models.RaceDurationPrediction;

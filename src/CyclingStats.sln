@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aerozure", "..\aerozure\src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aerobets.WebAPI", "Aerobets.WebAPI\Aerobets.WebAPI.csproj", "{8767EDB5-DB8F-47B2-8D8B-242FEC79E389}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclingStats.WebApi.Models", "CyclingStats.WebApi.Models\CyclingStats.WebApi.Models.csproj", "{E6835647-67B1-432D-9C4C-7B4EA5259D07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,9 @@ Global
 		{8767EDB5-DB8F-47B2-8D8B-242FEC79E389}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8767EDB5-DB8F-47B2-8D8B-242FEC79E389}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8767EDB5-DB8F-47B2-8D8B-242FEC79E389}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6835647-67B1-432D-9C4C-7B4EA5259D07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6835647-67B1-432D-9C4C-7B4EA5259D07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6835647-67B1-432D-9C4C-7B4EA5259D07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6835647-67B1-432D-9C4C-7B4EA5259D07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

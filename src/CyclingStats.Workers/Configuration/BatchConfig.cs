@@ -9,6 +9,7 @@ public class BatchConfig : IWorkerConfig
     {
         AgeMinutes = settings.Settings.GetIntSetting("ageMinutes", 1);
         BatchSize = settings.Settings.GetIntSetting("batchSize", 0);
+        Year = settings.Settings.GetIntSetting("year", 0);
         TopResults = settings.Settings.GetIntSetting("topResults", 50);
 
         if (settings.Settings?.ContainsKey("uciScales") ?? false)
@@ -43,5 +44,6 @@ public class BatchConfig : IWorkerConfig
     public bool OnlyMissingRiders { get; set; }
 
     public int AgeMinutes { get; set; }
+    public int Year { get; set; }
 }
 

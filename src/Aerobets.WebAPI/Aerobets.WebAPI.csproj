@@ -26,6 +26,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\aerozure\src\Aerozure\Aerozure.csproj" />
       <ProjectReference Include="..\CyclingStats.Logic\CyclingStats.Logic.csproj" />
+      <ProjectReference Include="..\CyclingStats.WebApi.Models\CyclingStats.WebApi.Models.csproj" />
     </ItemGroup>
     <Target Name="NSwag" AfterTargets="PostBuildEvent" Condition=" '$(Docker)' != 'yes' ">
         <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development;IS_NSWAG_BUILD=true;API_TITLE=CyclingStats API;INCLUDE_ALL_OPERATIONS=true" Command="$(NSwagExe_Net80) run nswag-client.json /variables:Configuration=$(Configuration),Output=cyclingstats-openapi.json" />

@@ -6,7 +6,7 @@
     "version": "1.0.0.0"
   },
   "paths": {
-    "/users/{UserId}/games": {
+    "/users/{userId}/games": {
       "get": {
         "tags": [
           "UserGames"
@@ -47,7 +47,7 @@
         }
       }
     },
-    "/users/{UserId}/games/{raceId}": {
+    "/users/{userId}/games/{raceId}": {
       "post": {
         "tags": [
           "UserGames"
@@ -128,7 +128,7 @@
         ],
         "responses": {
           "401": {
-            "description": "Not authorized to remove favorite riders.",
+            "description": "Not authorized to remove game.",
             "content": {
               "application/json": {
                 "schema": {
@@ -139,6 +139,275 @@
           },
           "200": {
             "description": "Rider removed."
+          }
+        }
+      }
+    },
+    "/users/{userId}/games/{gameId}/teams": {
+      "get": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_GetUserGameTeams",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve teams for the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Game teams list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGameTeamsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/games/{raceId}/teams": {
+      "post": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_AddGameTeam",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserGameTeamRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to add a game team.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Game team added."
+          }
+        }
+      }
+    },
+    "/users/{userId}/games/{raceId}/teams/{teamId}": {
+      "put": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_UpdateGameTeam",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserGameTeamRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 4
+        },
+        "responses": {
+          "401": {
+            "description": "Not authorized to add a game team.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Game team added."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_RemoveUserGameTeam",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "raceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to remove game team.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Rider removed."
+          }
+        }
+      }
+    },
+    "/users/{userId}/games/{gameId}/startlist": {
+      "get": {
+        "tags": [
+          "UserGames"
+        ],
+        "operationId": "UserGames_GetGameStartList",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Not authorized to retrieve start list for the game.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Start list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGameStartlistResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -536,9 +805,7 @@
             "description": "Player added."
           }
         }
-      }
-    },
-    "/users/{userId}/players/{wcsUserName}": {
+      },
       "delete": {
         "tags": [
           "Users"
@@ -724,6 +991,374 @@
           }
         }
       },
+      "UserGameTeamsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserGameTeam"
+            }
+          }
+        }
+      },
+      "UserGameTeam": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "teamId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "lastSaved": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "riders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamRider"
+            }
+          }
+        }
+      },
+      "TeamRider": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderId": {
+            "type": "string"
+          },
+          "youth": {
+            "type": "boolean"
+          },
+          "stars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "riderType": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateUserGameTeamRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "riders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamRider"
+            }
+          }
+        }
+      },
+      "UpdateUserGameTeamRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "riders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamRider2"
+            }
+          }
+        }
+      },
+      "TeamRider2": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderId": {
+            "type": "string"
+          },
+          "youth": {
+            "type": "boolean"
+          },
+          "stars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "riderType": {
+            "type": "string"
+          }
+        }
+      },
+      "UserGameStartlistResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "starBudget": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "riders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRiderRaceInfo"
+            }
+          }
+        }
+      },
+      "UserRiderRaceInfo": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RiderRaceInfo"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "bookmark": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/RiderBookmarkSummary"
+                  }
+                ]
+              },
+              "pastRaceResults": {
+                "type": "object",
+                "nullable": true,
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "lastYearResult": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "recommendationScore": {
+                "type": "number",
+                "format": "double"
+              },
+              "recommendationScores": {
+                "$ref": "#/components/schemas/RecommendationScores"
+              }
+            }
+          }
+        ]
+      },
+      "RiderBookmarkSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderId": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RecommendationScores": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "specialityPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "recentRacePoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "lastYearPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "overall": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RiderRaceInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rider": {
+            "$ref": "#/components/schemas/RiderSummary"
+          },
+          "profile": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RiderProfile"
+              }
+            ]
+          },
+          "youthRider": {
+            "type": "boolean"
+          },
+          "riderType": {
+            "type": "string"
+          },
+          "stars": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "starString": {
+            "type": "string"
+          }
+        }
+      },
+      "RiderSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "riderId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "pcsId": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2019": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2020": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2021": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2022": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2023": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2024": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2025": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ranking2026": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detailsCompleted": {
+            "type": "boolean"
+          },
+          "status": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RiderStatus"
+              }
+            ]
+          }
+        }
+      },
+      "RiderStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "New",
+          "Active",
+          "WaitingForDetails",
+          "NotFound",
+          "Retired",
+          "Error"
+        ],
+        "enum": [
+          0,
+          1,
+          5,
+          -4,
+          -2,
+          -1
+        ]
+      },
+      "RiderProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gc": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sprinter": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "puncheur": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "oneDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "climber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timeTrialist": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "uciRanking": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pcsRanking": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "UserListResponse": {
         "type": "object",
         "additionalProperties": false,
@@ -865,7 +1500,7 @@
         "additionalProperties": false,
         "properties": {
           "rider": {
-            "$ref": "#/components/schemas/RiderSummary"
+            "$ref": "#/components/schemas/RiderSummary2"
           },
           "comment": {
             "type": "string"
@@ -876,7 +1511,7 @@
           }
         }
       },
-      "RiderSummary": {
+      "RiderSummary2": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

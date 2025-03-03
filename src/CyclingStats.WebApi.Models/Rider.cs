@@ -1,6 +1,4 @@
-using CyclingStats.Models;
-
-namespace CyclingStats.WebAPI.ServiceContracts.Structs;
+namespace CyclingStats.WebApi.Models;
 
 public class Rider
 {
@@ -35,7 +33,7 @@ public class Rider
 
     public string WcsUrl => $"https://www.worldcyclingstats.com/en/rider/{Id}/{DateTime.UtcNow.Year}";
     public string PcsUrl => $"https://www.procyclingstats.com/rider/{Id}/{DateTime.UtcNow.Year}";
-    public static Rider FromDomain(Models.Rider rider)
+    public static Rider FromDomain(CyclingStats.Models.Rider rider)
     {
         return new Rider
         {
